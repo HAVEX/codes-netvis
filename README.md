@@ -19,7 +19,8 @@ Different CODES input and output files are needed to be provided to the CODES-Ne
 * Settings and parameters used for configuring the network model, including the number of routers and compute nodes in a network.  
 
 ### Workload and Job Allocation Files
-* Configuration about the workload and job allocation.  
+* Each job or workload is listed in each line in the workload configuration file.
+* All the compute nodes allocated for each job is separated by a line bread in the job allocation file. 
 
 ### Network Connection Files
 * Connection of the network topology and the associated link arrangements
