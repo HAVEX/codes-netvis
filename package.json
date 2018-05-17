@@ -1,0 +1,32 @@
+{
+  "name": "codes-netvis",
+  "version": "0.1.0",
+  "description": "Visual analytics tool for supporting CODES network simulation framework",
+  "main": "index.js",
+  "dependencies": {
+    "dashi": "^0.3.1",
+    "p6": "^0.5.2",
+    "p6-solo": "^0.3.0"
+  },
+  "devDependencies": {
+    "uglifyjs-webpack-plugin": "^1.2.5",
+    "webpack": "^3.6.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --config build.js",
+    "watch": "webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "."
+  },
+  "keywords": [
+    "network simulation",
+    "visual analytics",
+    "performance analysis",
+    "data exploration"
+  ],
+  "author": "Kelvin Li",
+  "license": "BSD-3-Clause"
+}

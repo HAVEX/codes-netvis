@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.0/semantic.min.css">
+
+    <!-- <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico"> -->
+    <style>
+    body {
+        overflow: hidden;
+    }
+
+    .item.active {
+        border-bottom: 4px solid steelblue;
+        background-color: #FFF;
+    }
+
+    .selected.item  {
+        border: 1px solid steelblue!important;
+    }
+
+    #spec-ui-table tr{
+        border: 1px solid #333!important;
+    }
+
+    </style>
+    <title>CODES-VIS</title>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.0/semantic.min.js"></script>
+  </head>
+  <body>
+      <div class="ui top fixed menu page-menu" id="page-header" style="margin:0;">
+        <div class="item">
+          <h2 style="color: steelblue;">CODES-VIS</h2>
+
+        </div>
+        <a class="item active" href="#page-stats"><i class="bar chart icon"></i>Statistical Analysis</a>
+        <a class="item" href="#page-network"><i class="sun icon"></i>Network Exploration</a>
+        <a class="item" href="#page-tseries"><i class="line chart icon"></i>Time-Series Analysis</a>
+        <div class="right menu">
+            <a class="ui item data-button">
+                <i class="database icon large blue" title="select data"></i>
+            </a>
+        </div>
+
+      </div>
+      <div class="ui large modal" id="page-data">
+        <div class="header">Datasets
+            <div style="float: right">
+             <h2 style="color: steelblue;">CODES-VIS</h2>
+            </div>
+        </div>
+        <div class="scrolling content">
+          <div id="data-list">
+
+          </div>
+        </div>
+        <!-- <div class="actions"></div> -->
+      </div>
+      <div class="ui sidebar right vertical menu" id="page-sidebar" style="width: 32rem; padding: 1em;">
+          <div style="bottom: 2em; right: 2em; position: absolute;">
+          </div>
+      </div>
+
+      <div class="pusher" id="page-main">
+          <div id="page-stats"></div>
+          <div id="page-network"></div>
+          <div id="page-tseries"></div>
+      </div>
+      <script src="dist/codes-netvis.js"></script>
+      <script>
+    //   require.config({
+    //       paths: {
+    //           ace: ["//cdnjs.cloudflare.com/ajax/libs/ace/1.2.6"],
+    //           text: '/npm/requirejs-text/text'
+    //        }
+    //   })
+
+    //   require(['main'], function(main){
+    //       main();
+    //   })
+      </script>
+  </body>
+</html>
