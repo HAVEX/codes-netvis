@@ -10,7 +10,7 @@ const LINK_METRICS = ["group_id", "router_id", "router_port", "sat_time", "traff
 
 export default function loadData(args, callback) {
     const URL =  args.path || args.folder;
-    const DATASET = '/data/' + URL;
+    const DATASET = 'data/' + URL;
     const TERMINAL_PER_ROUTER = args.terminals / args.routers;
     const ROUTER_PER_GROUP = args.routers / args.groups;
     const LOCAL_LINK_COUNT = args.localLinkPerRouter || ROUTER_PER_GROUP;

@@ -2187,7 +2187,7 @@ const LINK_METRICS = ["group_id", "router_id", "router_port", "sat_time", "traff
 
 function loadData(args, callback) {
     const URL =  args.path || args.folder;
-    const DATASET = '/data/' + URL;
+    const DATASET = 'data/' + URL;
     const TERMINAL_PER_ROUTER = args.terminals / args.routers;
     const ROUTER_PER_GROUP = args.routers / args.groups;
     const LOCAL_LINK_COUNT = args.localLinkPerRouter || ROUTER_PER_GROUP;
@@ -12934,7 +12934,7 @@ let selectMetrics = function(data, metrics) {
 function transform(input) {
     var result = {},
         db = {};
-    console.log(Object.keys(input.terminals[0]));
+    // console.log(Object.keys(input.terminals[0]));
     db = cstore({
         size: input.terminals.length,
         keys: TERMINAL_METRICS,
