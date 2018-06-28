@@ -1,6 +1,7 @@
 import dataManagement from "./datamgmt";
 import stats from "./stats/app";
-// import network from "./network/app";
+import network from "./network/app";
+import datasets from '../data/datasets.js';
 
 export default function App() {
     let pageHeaderHeight = $('#page-header').height() + 20;
@@ -46,28 +47,33 @@ export default function App() {
         container: 'page-stats',
     });
 
-    // boards.network = network({
-    //     container: 'page-network',
-    //     onupdate: function(spec) {
+    boards.network = network({
+        container: 'page-network',
+        onupdate: function(spec) {
 
-    //     }
-    // });
+        }
+    });
 
     // boards.tseries = timeseries({
     //     container: 'page-tseries'
     // })
 
+    // $.getJSON('data/datasets.json', function(data){
+    //     console.log(data);
+    // });
+
     dataManagement({
         container: 'data-list',
+        datasets: datasets,
         onselect: function(data, metadata) {
-            console.log(data)
+            // console.log(data)
             boards.stats.update(data);
-            // boards.network.update(data);
-            // var visSpec = boards.network.getSpec();
-            // boards.network.onUpdate = function(d) {
-            //     console.log(d);
-            //     boards.tseries.update(d, data, metadata);
-            // }
+            boards.network.update(data);
+            var visSpec = boards.network.getSpec();
+            boards.network.onUpdate = function(d) {
+                console.log(d);
+                boards.tseries.update(d, data, metadata);
+            }
             // boards.tseries.update(visSpec, data, metadata);
             $('.ui.large.modal').modal('toggle');
         },

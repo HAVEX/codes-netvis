@@ -20,6 +20,7 @@ export default function statsApp(arg) {
         ]
     });
 
+    console.log(data);
 
     views.terminals = new Panel({
         container: board.cell('terminal-metrics'),
@@ -55,54 +56,30 @@ export default function statsApp(arg) {
     return stats;
 }
 
-function dualView(w, h) {
-    return [
-        {
-            width: w,
-            height: h / 2,
-            offset: [0, 0]
-        },
-        {
-            width: w,
-            height: h / 2,
-            offset: [0, h/2]
-        },
-    ];
-}
-
-function triView(w, h) {
-    return [
-        {
-            width: w,
-            height: h / 2,
-            offset: [0, 0]
-        },
-        {
-            width: w / 2,
-            height: h / 2 ,
-            offset: [0, h/2]
-        },
-        {
-            width: w / 2,
-            height: h / 2,
-            offset: [w/2, h/2]
-        },
-    ]
-};
-
-
-
 function visualize(data) {
-    console.log(data)
     var vis = {};
     vis.localLinks = p6({
         container: views.localLinks.body,
         padding: {left: 70, right: 20, top: 10, bottom: 70},
         viewport: [views.localLinks.innerWidth, views.localLinks.innerHeight],
-        // views: dualView(views.localLinks.innerWidth, views.localLinks.innerHeight)
     })
     .data(data.localLinks)
-    .view(dualView(views.localLinks.innerWidth, views.localLinks.innerHeight))
+    .view([
+        {
+            id: 'plot-stats',
+            padding: {top: 20, bottom: 70, left: 70, right: 20},
+            width: views.localLinks.innerWidth,
+            height: views.localLinks.innerHeight / 2,
+            offset: [0, views.localLinks.innerHeight/2]
+        },
+        {
+            id: "plot-local-links",
+            padding: {top: 20, bottom: 70, left: 70, right: 20},
+            width: views.localLinks.innerWidth,
+            height: views.localLinks.innerHeight / 2,
+            offset: [0, 0]
+        },
+    ])
     .visualize({
         id: "plot-local-links",
         mark: "point",
@@ -114,28 +91,43 @@ function visualize(data) {
 
     vis.localLinks
     .aggregate({
-        $bin: 'traffic',
-        $collect: {
-            total_sat_time : {$sum: "sat_time"}
+        $bin: {traffic: 8},
+        $reduce: {
+            total_sat_time : {$sum: "sat_time"},
+            link_count: {$count: "*"}
         }
     })
     .visualize({
         id: 'plot-stats',
         mark: "bar",
         x: "traffic",
-        y: "total_sat_time",
+        // height: "total_sat_time",
+        height: "link_count",
         color: 'steelblue'
     });
 
-    p6({
-        // data: data.globalLinks,
+    vis.globalLinks = p6({
         container: views.globalLinks.body,
         padding: {left: 70, right: 20, top: 10, bottom: 70},
         viewport: [views.globalLinks.innerWidth, views.globalLinks.innerHeight],
-        // views: dualView(views.globalLinks.innerWidth, views.globalLinks.innerHeight)
     })
     .data(data.globalLinks)
-    .view(dualView(views.globalLinks.innerWidth, views.globalLinks.innerHeight))
+    .view([
+        {
+            id: 'plot-stats',
+            padding: {top: 20, bottom: 70, left: 70, right: 20},
+            width: views.globalLinks.innerWidth,
+            height: views.globalLinks.innerHeight / 2,
+            offset: [0, views.globalLinks.innerHeight/2]
+        },
+        {
+            id: "plot-global-links",
+            padding: {top: 20, bottom: 70, left: 70, right: 20},
+            width: views.globalLinks.innerWidth,
+            height: views.globalLinks.innerHeight / 2,
+            offset: [0, 0]
+        },
+    ])
     .visualize({
         id: "plot-global-links",
         mark: "point",
@@ -145,34 +137,57 @@ function visualize(data) {
         alpha: 0.5
     })
     .aggregate({
-        $bin: 'traffic',
-        $collect: {
-            total_sat_time : {$sum: "sat_time"},
+        $bin: {traffic: 8},
+        // $group: 'traffic',
+        $reduce: {
+            // total_sat_time : {$sum: "sat_time"},
+            total_traffic : {$sum: "traffic"},
+            link_count: {$count: "*"}
         }
     })
     .visualize({
         id: 'plot-stats',
         mark: "bar",
         x: "traffic",
-        y: "total_sat_time",
+        // height: "total_sat_time",
+        height: "link_count",
         color: 'purple'
     });
 
     var terminalColorEncoding = (numJobs == 1) ? 'teal' : 'job_id';
 
     vis.terminals = p6({
-        data: data.terminals,
         container: views.terminals.body,
         padding: {left: 70, right: 50, top: 30, bottom: 70},
         viewport: [
             views.terminals.innerWidth,
             views.terminals.innerHeight
-        ],
-        views: triView(views.terminals.innerWidth, views.terminals.innerHeight)
+        ]
     })
-    // .filter({
-    //     terminal_id: [0, 1000]
-    // })
+    .data(data.terminals)
+    .view([
+        {
+            id: "terminals",
+            padding: {top: 50, bottom: 20, left: 70, right: 50},
+            width: views.terminals.innerWidth,
+            height: views.terminals.innerHeight / 2,
+            offset: [0, 0]
+        },
+        {
+            id: 'avg_packet_latency',
+            padding: {top: 20, bottom: 70, left: 70, right: 20},
+            width: views.terminals.innerWidth / 2,
+            height: views.terminals.innerHeight / 2 ,
+            offset: [0, views.terminals.innerHeight/2]
+        },
+        {
+            id: 'sattime',
+            padding: {top: 20, bottom: 70, left: 70, right: 20},
+            width: views.terminals.innerWidth / 2,
+            height: views.terminals.innerHeight / 2,
+            offset: [views.terminals.innerWidth/2, views.terminals.innerHeight/2]
+        },
+    ])
     .visualize({
         id: "terminals",
         mark: "line",
@@ -180,33 +195,20 @@ function visualize(data) {
         color: terminalColorEncoding,
         alpha: 0.25
     })
-    // .visualize({
-    //     id: "plot-global-links",
-    //     mark: "point",
-    //     x: "data_size",
-    //     y: "sat_time",
-    //     color: 'purple',
-    //     alpha: 0.5
-    // })
-    // .derive({
-    //     gid: 'floor(group_id / 5.0)'
-    // })
-    // .filter({
-    //     avg_hops: [2, 3]
-    // })
-    // .register('branch')
+
+    vis.terminals
     .aggregate({
-        // $group: 'terminal_id',
-        $bin: 'avg_packet_latency',
-        $collect: {
+        $group: 'terminal_id',
+        // $bin: 'avg_packet_latency',
+        $reduce: {
             avg_hops: {$avg: "avg_hops"}
         }
     })
     .visualize({
         id: 'avg_packet_latency',
-        mark: "bar",
+        mark: "rect",
         x: "avg_packet_latency",
-        y: "avg_hops",
+        height: "avg_hops",
         color: 'teal',
         // interact: function(d) {
         //     console.log(d);
@@ -217,7 +219,7 @@ function visualize(data) {
     .head()
     .aggregate({
         $bin: 'data_size',
-        $collect: {
+        $reduce: {
             Total_sat_time : {$sum: "sat_time"}
         }
     })
@@ -225,7 +227,7 @@ function visualize(data) {
         id: 'sattime',
         mark: "bar",
         x: "data_size",
-        y: "Total_sat_time",
+        height: "Total_sat_time",
         color: 'teal'
     });
 }

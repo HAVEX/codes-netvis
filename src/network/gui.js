@@ -1,3 +1,9 @@
+import {colorLegend} from 'hc5';
+import colorbrewer from 'colorbrewer';
+import * as d3ColorChromatic from 'd3-scale-chromatic';
+
+console.log(d3ColorChromatic.schemeBlues[10], Object.keys(colorbrewer));
+
 var template = '' +
 '<div id="specUI" class="ui form" style=" padding: 20px;">' +
   '<div class="fields"  style="width: 100%; background: #EEE; padding: 20px;">' +
@@ -35,296 +41,297 @@ var template = '' +
   '</div>' +
 '</div>';
 
+var layers = [];
 
-define(function(require){
-    const colorLegend = require('../c4v/colorLegend');
+var colorSchemes = [
+    ["#eee", 'steelblue'],
+    ["#eee", 'purple'],
+    ["#eee", 'teal'],
+    ["steelblue", 'red'],
+].concat(
+Object.keys(d3ColorChromatic).filter(function(f){
+    return f.match('interpolate');
+}).map(function(scheme){
+    return scheme.replace('interpolate', '');
+})
+)
 
-    var layers = [];
+console.log(colorSchemes);
 
-    var colorSchemes = [
-        ["#eee", 'steelblue'],
-        ["#eee", 'purple'],
-        ["#eee", 'teal'],
-        ["steelblue", 'red'],
-        'YlGn',
-        'Reds',
-        'Blues',
-        'RdYlGn'
-    ];
+var entities = [
+    'global_links',
+    'local_links',
+    'terminals'
+];
 
-    var entities = [
-        'global_links',
-        'local_links',
-        'terminals'
-    ];
+const METRICS_NULL = ' --- ';
 
-    const METRICS_NULL = ' --- ';
+var linkMetrics = [
+    METRICS_NULL,
+    'traffic',
+    'sat_time',
+];
 
-    var linkMetrics = [
-        METRICS_NULL,
-        'traffic',
-        'sat_time',
-    ];
+var terminalMetrics = [
+    METRICS_NULL,
+    'avg_packet_latency',
+    'avg_hops',
+    'data_size',
+    'sat_time',
+    'router_port',
+    'router_rank',
+    'job_id'
+];
 
-    var terminalMetrics = [
-        METRICS_NULL,
-        'avg_packet_latency',
-        'avg_hops',
-        'data_size',
-        'sat_time',
-        'router_port',
-        'router_rank',
-        'job_id'
-    ];
+var metrics = {
+    local_links: linkMetrics,
+    global_links: linkMetrics,
+    terminals: terminalMetrics,
+}
 
-    var metrics = {
-        local_links: linkMetrics,
-        global_links: linkMetrics,
-        terminals: terminalMetrics,
+export default function GUI(arg) {
+    var options = arg || {},
+        container = options.container,
+        onSave = options.onsave || options.onSave || function(){};
+
+    $('#'+container).html(template);
+
+    var aggrAttr = 'router_rank';
+
+    function updateSelection(sel, options, selectedAttr) {
+        var index = (options.indexOf(selectedAttr) > -1) ? options.indexOf(selectedAttr) : 0;
+        sel.html('');
+        sel.dropdown();
+        options.forEach(function(opt, ii){
+            var item = $('<option/>');
+            // if(ii == index) item.addClass('active selected');
+            sel.append(item.attr('value', opt).text(opt));
+        })
+        sel.dropdown('set value', options[index]);
+        sel.dropdown('set text', options[index]);
+        sel.dropdown('refresh');
     }
 
-    return function(arg) {
-        var options = arg || {},
-            container = options.container
-            onSave = options.onsave || options.onSave || function(){};
+    function createLayer(arg) {
+        var spec = arg || {},
+            vmap = spec.vmap || {},
+            projectEntity = spec.project || 'global_links',
+            colorAttr = vmap.color || null,
+            sizeAttr = vmap.size || null,
+            xAttr = vmap.x || null,
+            yAttr = vmap.y || null,
+            colorMap = spec.colors,
+            aggregate = spec.aggregate || false;
 
-        $('#'+container).html(template);
+        if(arg && !spec.vmap) return;
 
+        if(!spec.aggregate) aggregate = true;
 
+        var tr = $('<tr/>'),
+            td1 = $('<td/>'),
+            td2 = $('<td/>'),
+            td3 = $('<td/>'),
+            projection = $('<select/>').addClass('ui fluid dropdown'),
+            field = $('<div/>').addClass('field');
 
-        var aggrAttr = 'router_rank';
+        var boxLabel = $('<label/>').text('Aggregate'),
+            checkbox = $('<div/>').addClass('ui checkbox'),
+            boxInput = $('<input/>')
+                .attr('type', 'checkbox')
+                .attr('tabindex', '0')
+                .addClass('hidden');
 
+        var div1 = $('<div/>').addClass('two fields'),
+            sizeField = $('<div/>').addClass('field'),
+            colorField = $('<div/>').addClass('field'),
+            size = $('<select/>').addClass('ui fluid dropdown'),
+            color = $('<select/>').addClass('ui fluid dropdown');
 
+        sizeField.append($('<label/>').text('Size'));
+        sizeField.append(size);
+        colorField.append($('<label/>').text('Color'));
+        colorField.append(color);
 
-        function updateSelection(sel, options, selectedAttr) {
-            var index = (options.indexOf(selectedAttr) > -1) ? options.indexOf(selectedAttr) : 0;
-            sel.html('');
-            sel.dropdown();
-            options.forEach(function(opt, ii){
-                var item = $('<option/>');
-                // if(ii == index) item.addClass('active selected');
-                sel.append(item.attr('value', opt).text(opt));
-            })
-            sel.dropdown('set value', options[index]);
-            sel.dropdown('set text', options[index]);
-            sel.dropdown('refresh');
-        }
+        var div2 = $('<div/>').addClass('two fields'),
+            cxField = $('<div/>').addClass('field'),
+            cyField = $('<div/>').addClass('field'),
+            cx= $('<select/>').addClass('ui fluid dropdown'),
+            cy = $('<select/>').addClass('ui fluid dropdown');
 
-        function createLayer(arg) {
-            var spec = arg || {},
-                vmap = spec.vmap || {},
-                projectEntity = spec.project || 'global_links',
-                colorAttr = vmap.color || null,
-                sizeAttr = vmap.size || null,
-                xAttr = vmap.x || null,
-                yAttr = vmap.y || null,
-                colorMap = spec.colors,
-                aggregate = spec.aggregate || false;
+        cxField.append($('<label/>').text('Angular (x)'));
+        cxField.append(cx);
+        cyField.append($('<label/>').text('Radial (y)'));
+        cyField.append(cy);
 
-            if(arg && !spec.vmap) return;
-
-            if(!spec.aggregate) aggregate = true;
-
-            var tr = $('<tr/>'),
-                td1 = $('<td/>'),
-                td2 = $('<td/>'),
-                td3 = $('<td/>'),
-                projection = $('<select/>').addClass('ui fluid dropdown'),
-                field = $('<div/>').addClass('field');
-
-            var boxLabel = $('<label/>').text('Aggregate'),
-                checkbox = $('<div/>').addClass('ui checkbox'),
-                boxInput = $('<input/>')
-                    .attr('type', 'checkbox')
-                    .attr('tabindex', '0')
-                    .addClass('hidden');
-
-            var div1 = $('<div/>').addClass('two fields'),
-                sizeField = $('<div/>').addClass('field'),
-                colorField = $('<div/>').addClass('field'),
-                size = $('<select/>').addClass('ui fluid dropdown'),
-                color = $('<select/>').addClass('ui fluid dropdown');
-
-            sizeField.append($('<label/>').text('Size'));
-            sizeField.append(size);
-            colorField.append($('<label/>').text('Color'));
-            colorField.append(color);
-
-            var div2 = $('<div/>').addClass('two fields'),
-                cxField = $('<div/>').addClass('field'),
-                cyField = $('<div/>').addClass('field'),
-                cx= $('<select/>').addClass('ui fluid dropdown'),
-                cy = $('<select/>').addClass('ui fluid dropdown');
-
-            cxField.append($('<label/>').text('Angular (x)'));
-            cxField.append(cx);
-            cyField.append($('<label/>').text('Radial (y)'));
-            cyField.append(cy);
-
-            updateDropDown(projectEntity);
-            function updateDropDown(en) {
-                updateSelection(size, metrics[en], sizeAttr);
-                updateSelection(color, metrics[en], colorAttr);
-                if(metrics[en].length > 3) {
-                    div2.css('display', 'flex');
-                    updateSelection(cx, metrics[en], xAttr);
-                    updateSelection(cy, metrics[en], yAttr);
-                } else {
-                    div2.css('display', 'none');
-                }
-            }
-
-
-            checkbox.append(boxLabel);
-            checkbox.append(boxInput);
-            if(aggregate)
-                checkbox.checkbox('check');
-            else
-                checkbox.checkbox();
-            field.append(projection);
-            td1.append(field, checkbox);
-
-            div1.append(colorField, sizeField);
-            div2.append(cxField, cyField);
-            td2.append(div1, div2);
-
-
-            var colorMenuDiv = $('<div/>')
-                .addClass('ui fluid selection dropdown')
-                .css('padding', '10px 4px'),
-                colorMenu = $('<div/>').addClass('menu'),
-                colorDisplay = $('<div/>').addClass('default text');
-
-            colorMenuDiv.append($('<i/>').addClass('dropdown icon'));
-            colorMenuDiv.append(colorDisplay);
-
-            colorMenuDiv.append(colorMenu);
-
-            colorSchemes.forEach(function(cs){
-                var item = $('<div/>').addClass('item').attr('data-value', cs);
-
-
-                var colorGardient = colorLegend({
-                    width: 120,
-                    height: 20,
-                    padding: {left: 0, right: 0, top: 0, bottom: 0},
-                    colors: cs,
-                    nolabel: true
-                })
-
-                if(JSON.stringify(cs) == JSON.stringify(colorMap)) {
-                    colorDisplay.append(colorGardient.svg);
-                    item.addClass('active selected');
-                }
-
-                item.append(colorGardient.svg);
-                colorMenu.append(item);
-
-            })
-            colorMenuDiv.dropdown();
-
-            td3.append(colorMenuDiv);
-
-            tr.append(td1, td2, td3);
-            $('#specTable').append(tr);
-
-            //
-
-            updateSelection(projection, entities, projectEntity);
-
-            projection.change(function() {
-                var v = projection.val();
-                updateDropDown(v);
-            })
-            function getLayerSpec(id) {
-                var spec = {},
-                    sizeAttr = size.val(),
-                    colorAttr = color.val(),
-                    xAttr = cx.val(),
-                    yAttr = cy.val(),
-                    colorScheme = colorMenuDiv.dropdown('get value').split(','),
-                    vmap = {};
-
-                if(colorScheme.length == 1) colorScheme = colorScheme[0];
-
-                if(sizeAttr != METRICS_NULL) vmap.size = sizeAttr;
-                if(colorAttr != METRICS_NULL) vmap.color = colorAttr;
-                if(xAttr != METRICS_NULL && xAttr !== null) vmap.x = xAttr;
-                if(yAttr != METRICS_NULL && yAttr !== null) vmap.y = yAttr;
-
-                if(aggregate) {
-                    spec.aggregate = (aggrAttr == 'router_rank')
-                        ? 'router_port'
-                        : 'router_rank';
-
-                    if(id === 0) spec.aggregate = aggrAttr;
-                }
-
-                spec.project = projection.val();
-                spec.vmap = vmap;
-                spec.colors = colorScheme;
-
-                return spec;
-            }
-
-            return {
-                getSpec: getLayerSpec,
-                remove: function() {tr.html('')}
+        updateDropDown(projectEntity);
+        function updateDropDown(en) {
+            updateSelection(size, metrics[en], sizeAttr);
+            updateSelection(color, metrics[en], colorAttr);
+            if(metrics[en].length > 3) {
+                div2.css('display', 'flex');
+                updateSelection(cx, metrics[en], xAttr);
+                updateSelection(cy, metrics[en], yAttr);
+            } else {
+                div2.css('display', 'none');
             }
         }
 
+        checkbox.append(boxLabel);
+        checkbox.append(boxInput);
+        if(aggregate)
+            checkbox.checkbox('check');
+        else
+            checkbox.checkbox();
+        field.append(projection);
+        td1.append(field, checkbox);
 
-        function getSpec() {
-            return layers.map(function(layer, li){
-                return layer.getSpec(li);
-            });
-        }
+        div1.append(colorField, sizeField);
+        div2.append(cxField, cyField);
+        td2.append(div1, div2);
 
 
+        var colorMenuDiv = $('<div/>')
+            .addClass('ui fluid selection dropdown')
+            .css('padding', '10px 4px'),
+            colorMenu = $('<div/>').addClass('menu'),
+            colorDisplay = $('<div/>').addClass('default text');
 
-        $('#aggregation-attr').change(function(){
-            aggrAttr = $(this).val();
-        })
+        colorMenuDiv.append($('<i/>').addClass('dropdown icon'));
+        colorMenuDiv.append(colorDisplay);
 
-        $("#add-layer").click(function(){
-            layers.push(createLayer());
-        })
+        colorMenuDiv.append(colorMenu);
 
-        $("#save-spec").click(function(){
-            onSave(getSpec());
-        })
+        colorDisplay.append(
+            colorLegend({
+                width: 120,
+                height: 20,
+                padding: {left: 0, right: 0, top: 0, bottom: 0},
+                colors: colorMap,
+                // container: item.get(0),
+                nolabel: true
+            }).node()
+        );
 
-        $("#remove-layer").click(function(){
-            if(layers.length)
-                layers.pop().remove();
-        })
+        colorSchemes.forEach(function(cs){
+            var item = $('<div/>').addClass('item').attr('data-value', cs);
 
-        $('.ui.dropdown').dropdown();
-
-        function clearGUI() {
-            $('#specTable').html('');
-        }
-
-        function createGUI(specs) {
-            updateSelection(
-                $('#aggregation-attr'),
-                ['group_id', 'router_rank', 'job_id', 'traffic', 'sat_time'],
-                specs[0].aggregate
-            );
-            aggrAttr = specs[0].aggregate;
-            clearGUI();
-            specs.forEach(function(spec, si){
-                var l = createLayer(spec);
-                if(l) layers[si] = l;
+            var colorGardient = colorLegend({
+                width: 120,
+                height: 20,
+                padding: {left: 0, right: 0, top: 0, bottom: 0},
+                colors: cs,
+                // container: item.get(0),
+                nolabel: true
             })
-            $('.item.active.selected').trigger('click');
+
+            if(JSON.stringify(cs) == JSON.stringify(colorMap)) {
+                // colorDisplay.append(colorGardient.node());
+                item.addClass('active selected');
+            }
+
+            item.append(colorGardient.node());
+            colorMenu.append(item);
+
+        })
+        colorMenuDiv.dropdown();
+
+        td3.append(colorMenuDiv);
+
+        tr.append(td1, td2, td3);
+        $('#specTable').append(tr);
+
+        updateSelection(projection, entities, projectEntity);
+
+        projection.change(function() {
+            var v = projection.val();
+            updateDropDown(v);
+        })
+        function getLayerSpec(id) {
+            var spec = {},
+                sizeAttr = size.val(),
+                colorAttr = color.val(),
+                xAttr = cx.val(),
+                yAttr = cy.val(),
+                colorScheme = colorMenuDiv.dropdown('get value').split(','),
+                vmap = {};
+
+            if(colorScheme.length == 1) colorScheme = colorScheme[0];
+
+            if(sizeAttr != METRICS_NULL) vmap.size = sizeAttr;
+            if(colorAttr != METRICS_NULL) vmap.color = colorAttr;
+            if(xAttr != METRICS_NULL && xAttr !== null) vmap.x = xAttr;
+            if(yAttr != METRICS_NULL && yAttr !== null) vmap.y = yAttr;
+
+            if(aggregate) {
+                spec.aggregate = (aggrAttr == 'router_rank')
+                    ? 'router_port'
+                    : 'router_rank';
+
+                if(id === 0) spec.aggregate = aggrAttr;
+            }
+
+            spec.project = projection.val();
+            spec.vmap = vmap;
+            spec.colors = colorScheme;
+
+            return spec;
         }
 
         return {
-            getSpec: getSpec,
-            create: createGUI,
-            clear: clearGUI
+            getSpec: getLayerSpec,
+            remove: function() {tr.html('')}
         }
-
     }
-})
+
+    function getSpec() {
+        return layers.map(function(layer, li){
+            return layer.getSpec(li);
+        });
+    }
+
+    $('#aggregation-attr').change(function(){
+        aggrAttr = $(this).val();
+    })
+
+    $("#add-layer").click(function(){
+        layers.push(createLayer());
+    })
+
+    $("#save-spec").click(function(){
+        onSave(getSpec());
+    })
+
+    $("#remove-layer").click(function(){
+        if(layers.length)
+            layers.pop().remove();
+    })
+
+    $('.ui.dropdown').dropdown();
+
+    function clearGUI() {
+        $('#specTable').html('');
+    }
+
+    function createGUI(specs) {
+        updateSelection(
+            $('#aggregation-attr'),
+            ['group_id', 'router_rank', 'job_id', 'traffic', 'sat_time'],
+            specs[0].aggregate
+        );
+        aggrAttr = specs[0].aggregate;
+        clearGUI();
+        specs.forEach(function(spec, si){
+            var l = createLayer(spec);
+            if(l) layers[si] = l;
+        })
+        $('.item.active.selected').trigger('click');
+    }
+
+    return {
+        getSpec: getSpec,
+        create: createGUI,
+        clear: clearGUI
+    }
+
+}
+

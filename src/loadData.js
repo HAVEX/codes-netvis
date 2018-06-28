@@ -1,7 +1,6 @@
 import p6 from 'p6';
 import p6Solo from 'p6-solo';
 
-
 const ajax = p6.ajax;
 const dsv = p6.parse;
 const allocate = p6Solo.allocate;
@@ -10,13 +9,14 @@ const TERMINAL_METRICS = ["lp_id", "terminal_id", "data_size", "avg_packet_laten
 const LINK_METRICS = ["group_id", "router_id", "router_port", "sat_time", "traffic"];
 
 export default function loadData(args, callback) {
-    const DATASET = '/data/' + args.path,
-        TERMINAL_PER_ROUTER = args.terminals / args.routers,
-        ROUTER_PER_GROUP = args.routers / args.groups,
-        LOCAL_LINK_COUNT = args.localLinkPerRouter || ROUTER_PER_GROUP,
-        GLOBAL_LINK_COUNT = args.globalLinkPerRouter || TERMINAL_PER_ROUTER,
-        GROUP_TOTAL = TERMINAL_PER_ROUTER * ROUTER_PER_GROUP + 1,
-        ROUTER_TOTAL = ROUTER_PER_GROUP * GROUP_TOTAL;
+    const URL =  args.path || args.folder;
+    const DATASET = '/data/' + URL;
+    const TERMINAL_PER_ROUTER = args.terminals / args.routers;
+    const ROUTER_PER_GROUP = args.routers / args.groups;
+    const LOCAL_LINK_COUNT = args.localLinkPerRouter || ROUTER_PER_GROUP;
+    const GLOBAL_LINK_COUNT = args.globalLinkPerRouter || TERMINAL_PER_ROUTER;
+    const GROUP_TOTAL = args.groups || (TERMINAL_PER_ROUTER * ROUTER_PER_GROUP + 1);
+    const ROUTER_TOTAL = args.routers || (ROUTER_PER_GROUP * GROUP_TOTAL);
 
     function calcTargetRouter(group_id, router_id, port) {
         var first = router_id % ROUTER_TOTAL;
@@ -41,7 +41,7 @@ export default function loadData(args, callback) {
     var numJobs = 1;
 
     if(args.hasOwnProperty('jobAllocation'))
-        datafiles.push({url: DATASET + '/' +args.jobAllocation,dataType: "text"});
+        datafiles.push({url: DATASET + '/' +args.jobAllocation, dataType: "text"});
 
     return ajax.getAll(datafiles).then(function(text){
         
@@ -51,9 +51,10 @@ export default function loadData(args, callback) {
             types: ["int", "int", "int", "float", "float", "float", "float"],
             skip: 1
         }).objectArray();
+        
         terminals.forEach(function(terminal){
             terminal.job_id = -1;
-        })
+        });
 
         if(text.length > 3 && text[3].length) {
             var jobs = text[3].split("\n").map(function(j){return j.split(" ")});
@@ -64,10 +65,8 @@ export default function loadData(args, callback) {
                     var nid = parseInt(nodeId);
                     if(nid >= 0)
                         terminals[nid].job_id = jobId;
-                })
-
+                });
             });
-
             numJobs = jobs.length;
         }
 
@@ -120,7 +119,6 @@ export default function loadData(args, callback) {
             d.router_port = d.terminal_id % TERMINAL_PER_ROUTER;
             d.group_id = Math.floor(d.terminal_id/TERMINAL_PER_ROUTER/ROUTER_PER_GROUP);
         });
-
 
         if(typeof callback == 'function')
             callback({

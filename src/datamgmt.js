@@ -1,6 +1,6 @@
 import loadData from './loadData';
+import loadDataCustom from './loadDflyCustom';
 import {Layout, Panel, Button, Table, List} from 'dashi';
-import datasets from '../data/datasets.js';
 
 let selectedDatasetId = 2;
 
@@ -8,9 +8,11 @@ export default function dataManagement(arg) {
     var dataManager = {},
         options = arg || {},
         container = options.container,
+        datasets = options.datasets || [],
         oncancel = options.oncancel || function(){},
         onselect = options.onselect || function(){};
 
+    console.log(datasets);
     dataManager.onselect = onselect;
     dataManager.data = datasets[Object.keys(datasets)[0]];
 
@@ -27,32 +29,6 @@ export default function dataManagement(arg) {
         header: {height: 0.075, style: {backgroundColor: '#FFF', border: 'none'}}
     });
 
-
-    // var dataList = new List({
-    //     container: dataPanel.body,
-    //     types: ['selection', 'single', 'divided'],
-    //     selectedColor: 'blue',
-    //     onselect: function(d) {
-    //         selectedDatasetId = d;
-    //         // selectedDataset = d;
-    //         // var ds = datasets[selectedDataset];
-    //         // transform(ds).then(function(d){
-    //         //     data = d;
-    //         //     var newSpec = JSON.parse(editor.getValue());
-    //         //     views.network.clear();
-    //         //     circularVis(config, newSpec, data);
-    //         // });
-    //     }
-    // })
-    // datasets.forEach(function(ds){
-    //     dataList.append({
-    //         header: ds.tag,
-    //         icon: 'cloud download big',
-    //         text: ds.groups + ' groups, ' + ds.routers + ' routers, ' + ds.terminals + ' terminals'
-    //     })
-    // })
-    //
-
     var dataList = new Table({
         container: dataPanel.body,
         width: dataPanel.innerWidth,
@@ -60,30 +36,40 @@ export default function dataManagement(arg) {
     });
 
     datasets.forEach(function(ds, di){
-        dataList.addRow([di, ds.topology, ds.groups, ds.routers, ds.terminals, ds.tag, new Button({
-            label: 'Select',
-            types: ['primary'],
-            onclick: update.bind(null, di)})]);
-    })
+        dataList.addRow([
+            di, 
+            ds.topology, 
+            ds.groups, 
+            ds.routers, 
+            ds.terminals, 
+            ds.tag || ds.title,
+            new Button({
+                label: 'Select',
+                types: ['primary'],
+                onclick: updateDataset.bind(null, di)
+            })
+        ]);
+    });
 
-    // dataList.setSelectedItemIds([selectedDatasetId]);
+    function updateDataset(dsID) {
+        var datasetID = dsID || 0;
+        var dataset = datasets[datasetID];
+        console.log('selected dataset: ', dataset);
+        if(dataset.topology == 'Dragonfly') {
+            loadData(datasets[datasetID])
+            .then(function(data) {
+                dataManager.data = data;
+                dataManager.onselect(data, datasets[datasetID]);
+            });
+        } else {
+            loadDataCustom(datasets[datasetID])
+            .then(function(data) {
+                dataManager.data = data;
+                dataManager.onselect(data, datasets[datasetID]);
+            });
+        }
 
-    function update(dsID) {
-
-        loadData(datasets[dsID])
-        .then(function(data) {
-            dataManager.data = data;
-            dataManager.onselect(data, datasets[dsID]);
-        });
     }
-
-    // dataPanel.append(new Button({
-    //     label: 'Select',
-    //     types: ['primary'],
-    //     onclick: function() {
-    //         update();
-    //     }
-    // }));
 
     var actionDiv = document.createElement('div');
     actionDiv.className = "actions";
@@ -104,8 +90,7 @@ export default function dataManagement(arg) {
     }))
     dataPanel.append(actionDiv);
 
-
-    update(0);
+    updateDataset();
 
     return dataManager;
 }
