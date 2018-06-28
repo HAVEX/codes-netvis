@@ -2,6 +2,16 @@
 
 The CODES-NetVis tool can be used to visualize and analyze CODES network simulation results. 
 
+## Requirements
+Install NodeJS (>=6.0) and NPM. NVM is recommended for controlling the versions of NodeJS and NPM.
+
+## Setup and Run
+```
+npm install
+npm start
+```
+
+
 ## Input Data Files
 Different CODES input and output files are needed to be provided to the CODES-NetVis tool. Here are the details on each of these files.
 
