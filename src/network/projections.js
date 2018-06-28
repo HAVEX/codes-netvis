@@ -7,8 +7,8 @@ export default {
             aggregate: 'router_rank',
             project: 'local_links',
             vmap: {
-                size: 'traffic',
-                color: 'sat_time'
+                color: 'traffic',
+                // color: 'sat_time'
             },
             colors: 'Blues'
         },
@@ -37,8 +37,9 @@ export default {
             project: 'global_links',
             binMax: 9,
             vmap: {
-                size: 'traffic',
-                color: 'sat_time'
+                color: 'traffic',
+                // size: 'traffic',
+                // color: 'sat_time'
             },
             colors: ["#eee", 'purple'],
         },

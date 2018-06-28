@@ -20,8 +20,7 @@ export default function statsApp(arg) {
         ]
     });
 
-    console.log(data);
-
+    // console.log(data);
     views.terminals = new Panel({
         container: board.cell('terminal-metrics'),
         id: "panel-terminals",
@@ -192,42 +191,62 @@ function visualize(data) {
         id: "terminals",
         mark: "line",
         y: [ "terminal_id", "avg_packet_latency", "avg_hops", "data_size", "sat_time"],
+        brush: {
+            unselected: {
+                color: "lightgrey"
+            }
+        },
         color: terminalColorEncoding,
-        alpha: 0.25
+        opacity: 0.2,
     })
-
+    // .visualize({
+    //     id: 'avg_packet_latency',
+    //     mark: "point",
+    //     x: "avg_packet_latency",
+    //     y: "avg_hops",
+    //     opacity: "auto",
+    //     color: 'teal'
+    // })
+    // .visualize({
+    //     id: 'sattime',
+    //     mark: "point",
+    //     x: "data_size",
+    //     y: "sat_time",
+    //     color: 'teal',
+    //     opacity: "auto",
+    // });
+    
     vis.terminals
     .aggregate({
-        $group: 'terminal_id',
-        // $bin: 'avg_packet_latency',
+        // $group: 'terminal_id',
+        $bin: {'avg_packet_latency': 8},
         $reduce: {
-            avg_hops: {$avg: "avg_hops"}
+            avg_hops: {$avg: "avg_hops"},
+            terminal_count: {$count: "*"}
         }
     })
     .visualize({
         id: 'avg_packet_latency',
         mark: "rect",
         x: "avg_packet_latency",
-        height: "avg_hops",
-        color: 'teal',
-        // interact: function(d) {
-        //     console.log(d);
-        // }
-    })
+        height: "terminal_count",
+        color: 'teal'
+    });
 
     vis.terminals
     .head()
     .aggregate({
-        $bin: 'data_size',
+        $bin: {'data_size': 8},
         $reduce: {
-            Total_sat_time : {$sum: "sat_time"}
+            Total_sat_time : {$sum: "sat_time"},
+            terminal_count: {$count: "*"}
         }
     })
     .visualize({
         id: 'sattime',
         mark: "bar",
         x: "data_size",
-        height: "Total_sat_time",
+        height: "terminal_count",
         color: 'teal'
     });
 }

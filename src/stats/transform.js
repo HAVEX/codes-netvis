@@ -20,7 +20,7 @@ let selectMetrics = function(data, metrics) {
 export default function transform(input) {
     var result = {},
         db = {};
-    console.log(Object.keys(input.terminals[0]));
+    // console.log(Object.keys(input.terminals[0]));
     db = cstore({
         size: input.terminals.length,
         keys: TERMINAL_METRICS,
