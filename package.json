@@ -7,9 +7,8 @@
     "colorbrewer": "^1.1.0",
     "d3-scale-chromatic": "^1.3.0",
     "dashi": "^0.3.1",
-    "hc5": "^0.2.0",
-    "p6": "^0.5.4",
-    "p6-solo": "^0.3.2"
+    "dexie": "^2.0.4",
+    "hc5": "^0.2.0"
   },
   "devDependencies": {
     "uglifyjs-webpack-plugin": "^1.2.5",

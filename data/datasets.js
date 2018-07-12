@@ -1,15 +1,15 @@
 export default [
     {
-        tag: 'AMG on Dragonfly Adaptive',
-        path: 'dfly-2550-adaptive-amg-1728',
+        name: 'AMG on Dragonfly Adaptive',
+        path: 'data/dfly-2550-adaptive-amg-1728',
         topology: 'Dragonfly',
         groups: 51,
         routers: 510,
         terminals: 2550
     },
     {
-        tag: 'Dragonfly Dally Uniform Random Traffic',
-        path: 'dfly-dally-rand',
+        name: 'Dragonfly Dally Uniform Random Traffic',
+        path: 'data/dfly-dally-rand',
         topology: 'Dragonfly 1-D',
         groups: 65,
         routers: 1040,
@@ -17,16 +17,16 @@ export default [
         localLinkPerRouter: 17,
         globalLinkPerRouter: 8
     },
-    // {
-    //     tag: 'Dragonfly Plus Uniform Random Traffic',
-    //     path: 'dfly-plus-rand',
-    //     topology: 'Dragonfly Plus',
-    //     groups: 33,
-    //     routers: 1056,
-    //     terminals: 8448,
-    //     localLinkPerRouter: 16,
-    //     globalLinkPerRouter: 16
-    // },
+    {
+        name: 'Dragonfly Plus Uniform Random Traffic',
+        path: 'data/dfly-plus-rand',
+        topology: 'Dragonfly Plus',
+        groups: 33,
+        routers: 1056,
+        terminals: 8448,
+        localLinkPerRouter: 16,
+        globalLinkPerRouter: 16
+    },
     // {
     //     tag: 'AMR Boxlib on Dragonfly Adaptive',
     //     path: 'dfly-2550-adaptive-amr',

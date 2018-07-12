@@ -29,14 +29,30 @@ export default function transform(inputData) {
     })
     .execute(inputData.globalLinks);
     console.log(terminals, globalLinks);
-    var routers = join(join(terminals, localLinks), globalLinks);
+    var routers = join(terminals, localLinks);
+
+    if(globalLinks.length == routers.length) {
+        routers = join(routers, globalLinks);
+    }
 
     routers.forEach(function(router, ri){
         router.local_traffic = arrays.sum(router.local_links.map((d)=>(d.traffic)));
-        router.global_traffic = arrays.sum(router.global_links.map((d)=>(d.traffic)));
         router.terminal_traffic = arrays.sum(router.terminals.map((d)=>(d.data_size)));
         router.job_id = router.terminals[0].job_id;
-    })
+        if(!router.hasOwnProperty('global_links')) {
+            router.global_links = inputData.globalLinks.filter(d=>d.router_id == ri);
+        } 
+        router.global_traffic = arrays.sum(router.global_links.map((d)=>(d.traffic))) || 0;
+        router.global_links.forEach(function(link, li){
+            link.router_port = li;
+        });
 
+        router.local_links.forEach(function(link, li){
+            link.router_port = li;
+        });
+
+    });
+
+    console.log(routers)
     return routers;
 }

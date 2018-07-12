@@ -83,17 +83,19 @@ export default function netApp(arg) {
     guiDiv.setAttribute('id', 'spec-gui');
     guiDiv.style.width = "100%";
     guiDiv.style.height = views.editor.innerHeight + 'px';
-    guiDiv.style.display = "none";
     guiDiv.style.overflow = "scroll";
     // guiDiv.innerHTML = guiHTML;
     views.editor.append(guiDiv);
+
+    editorDiv.style.display = 'none';
+    guiDiv.style.display = 'block';
 
     var specGUI = gui({
         container: 'spec-gui',
         onsave: function(d) { console.log(d);}
     });
 
-    var showEditor = true;
+    var showEditor = false;
     // ace.config.set("packaged", true)
     // ace.config.set("basePath", require.toUrl("ace"))
     var editor = ace.edit("spec-editor");
@@ -104,7 +106,7 @@ export default function netApp(arg) {
         fontSize: "15pt"
     });
     visSpec = specifications[Object.keys(specifications)[1]];
-
+    specGUI.create(visSpec);
     editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
 
     var config = {
@@ -115,7 +117,7 @@ export default function netApp(arg) {
     };
 
     views.editor.header.append(new Icon({
-        types: ['edit', 'large', 'blue'],
+        types: ['edit outline', 'large'],
         onclick: function(){
 
             if(showEditor) {
@@ -138,7 +140,7 @@ export default function netApp(arg) {
 
     var updateButton = new Button({
             label: 'Update',
-            types: ['primary', 'xs'],
+            types: ['green', 'xs', 'icon', 'refresh'],
             size: '0.65em',
             onclick: function() {
             if(showEditor)

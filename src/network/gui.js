@@ -2,27 +2,25 @@ import {colorLegend} from 'hc5';
 import colorbrewer from 'colorbrewer';
 import * as d3ColorChromatic from 'd3-scale-chromatic';
 
-console.log(d3ColorChromatic.schemeBlues[10], Object.keys(colorbrewer));
-
 var template = '' +
 '<div id="specUI" class="ui form" style=" padding: 20px;">' +
   '<div class="fields"  style="width: 100%; background: #EEE; padding: 20px;">' +
-    '<div class="twelve wide field">' +
+    '<div class="sixteen wide field">' +
       '<label>Aggregate by</label>' +
       '<select class="ui search dropdown" id="aggregation-attr">' +
       '</select>' +
     '</div>' +
-    '<div class="four wide field">' +
-      '<label>BinMax</label>' +
-      '<input type="number" value="7" disable="" id="aggregation-binMax">' +
-    '</div>' +
+    // '<div class="four wide field">' +
+    //   '<label>BinMax</label>' +
+    //   '<input type="number" value="7" disable="" id="aggregation-binMax">' +
+    // '</div>' +
   '</div>' +
   '<table class="ui very basic celled table">' +
     '<thead>' +
       '<tr>' +
-        '<th width="125">Projection</th>' +
-        '<th>Visual Encoding</th>' +
-        '<th width="180">Color Schemes</th>' +
+        '<th width="120">Entity</th>' +
+        '<th>Metrics</th>' +
+        '<th>Color Schemes</th>' +
       '</tr>' +
     '</thead>' +
     '<tbody id="specTable">' +
@@ -31,12 +29,12 @@ var template = '' +
 
   '<div class="fields">' +
     '<div class="eight wide field" style="text-align: right;">' +
-      '<button id="add-layer" class="ui button green">Add Layer</button>' +
-      '<button id="remove-layer" class="ui button red">Remove Layer</button>' +
+      '<button id="add-layer" class="ui button primary xs">Add Layer</button>' +
+      '<button id="remove-layer" class="ui button red xs">Remove Layer</button>' +
     '</div>' +
     '<div class="six wide field ui action input">' +
       '<input type="text" placeholder="Name this config...">' +
-      '<button id="save-spec" class="ui button green">Save</button>' +
+      '<button id="save-spec" class="ui button primary xs">Save</button>' +
     '</div>' +
   '</div>' +
 '</div>';
@@ -47,16 +45,16 @@ var colorSchemes = [
     ["#eee", 'steelblue'],
     ["#eee", 'purple'],
     ["#eee", 'teal'],
-    ["steelblue", 'red'],
+    ["steelblue", 'red']
 ].concat(
-Object.keys(d3ColorChromatic).filter(function(f){
-    return f.match('interpolate');
-}).map(function(scheme){
-    return scheme.replace('interpolate', '');
-})
+    Object.keys(d3ColorChromatic).filter(function(f){
+        return f.match('interpolate');
+    }).map(function(scheme){
+        return scheme.replace('interpolate', '');
+    })
 )
 
-console.log(colorSchemes);
+// console.log(colorSchemes);
 
 var entities = [
     'global_links',
@@ -70,6 +68,7 @@ var linkMetrics = [
     METRICS_NULL,
     'traffic',
     'sat_time',
+    'traffic + sat_time'
 ];
 
 var terminalMetrics = [
@@ -117,7 +116,6 @@ export default function GUI(arg) {
             vmap = spec.vmap || {},
             projectEntity = spec.project || 'global_links',
             colorAttr = vmap.color || null,
-            sizeAttr = vmap.size || null,
             xAttr = vmap.x || null,
             yAttr = vmap.y || null,
             colorMap = spec.colors,
@@ -132,62 +130,24 @@ export default function GUI(arg) {
             td2 = $('<td/>'),
             td3 = $('<td/>'),
             projection = $('<select/>').addClass('ui fluid dropdown'),
-            field = $('<div/>').addClass('field');
+            field1 = $('<div/>').addClass('field');
 
-        var boxLabel = $('<label/>').text('Aggregate'),
-            checkbox = $('<div/>').addClass('ui checkbox'),
-            boxInput = $('<input/>')
-                .attr('type', 'checkbox')
-                .attr('tabindex', '0')
-                .addClass('hidden');
 
-        var div1 = $('<div/>').addClass('two fields'),
-            sizeField = $('<div/>').addClass('field'),
-            colorField = $('<div/>').addClass('field'),
-            size = $('<select/>').addClass('ui fluid dropdown'),
-            color = $('<select/>').addClass('ui fluid dropdown');
+        var field2 = $('<div/>').addClass('field'),
+            encoding = $('<select/>').addClass('ui fluid dropdown');
 
-        sizeField.append($('<label/>').text('Size'));
-        sizeField.append(size);
-        colorField.append($('<label/>').text('Color'));
-        colorField.append(color);
 
-        var div2 = $('<div/>').addClass('two fields'),
-            cxField = $('<div/>').addClass('field'),
-            cyField = $('<div/>').addClass('field'),
-            cx= $('<select/>').addClass('ui fluid dropdown'),
-            cy = $('<select/>').addClass('ui fluid dropdown');
-
-        cxField.append($('<label/>').text('Angular (x)'));
-        cxField.append(cx);
-        cyField.append($('<label/>').text('Radial (y)'));
-        cyField.append(cy);
+        field2.append(encoding);
 
         updateDropDown(projectEntity);
         function updateDropDown(en) {
-            updateSelection(size, metrics[en], sizeAttr);
-            updateSelection(color, metrics[en], colorAttr);
-            if(metrics[en].length > 3) {
-                div2.css('display', 'flex');
-                updateSelection(cx, metrics[en], xAttr);
-                updateSelection(cy, metrics[en], yAttr);
-            } else {
-                div2.css('display', 'none');
-            }
+            updateSelection(encoding, metrics[en], colorAttr);
         }
 
-        checkbox.append(boxLabel);
-        checkbox.append(boxInput);
-        if(aggregate)
-            checkbox.checkbox('check');
-        else
-            checkbox.checkbox();
-        field.append(projection);
-        td1.append(field, checkbox);
 
-        div1.append(colorField, sizeField);
-        div2.append(cxField, cyField);
-        td2.append(div1, div2);
+        field1.append(projection);
+        td1.append(field1);
+        td2.append(field2);
 
 
         var colorMenuDiv = $('<div/>')
@@ -216,7 +176,7 @@ export default function GUI(arg) {
             var item = $('<div/>').addClass('item').attr('data-value', cs);
 
             var colorGardient = colorLegend({
-                width: 120,
+                width: 160,
                 height: 20,
                 padding: {left: 0, right: 0, top: 0, bottom: 0},
                 colors: cs,
@@ -248,17 +208,21 @@ export default function GUI(arg) {
         })
         function getLayerSpec(id) {
             var spec = {},
-                sizeAttr = size.val(),
-                colorAttr = color.val(),
-                xAttr = cx.val(),
-                yAttr = cy.val(),
+                visualEncoding = encoding.val(),
                 colorScheme = colorMenuDiv.dropdown('get value').split(','),
                 vmap = {};
 
             if(colorScheme.length == 1) colorScheme = colorScheme[0];
 
-            if(sizeAttr != METRICS_NULL) vmap.size = sizeAttr;
-            if(colorAttr != METRICS_NULL) vmap.color = colorAttr;
+            console.log(visualEncoding)
+            if( visualEncoding.includes(' + ') ) {
+                var encodings = visualEncoding.split(' + ');
+                vmap.size = encodings[0];
+                vmap.color = encodings[1];
+            } else {
+                vmap.color = visualEncoding;
+            }
+
             if(xAttr != METRICS_NULL && xAttr !== null) vmap.x = xAttr;
             if(yAttr != METRICS_NULL && yAttr !== null) vmap.y = yAttr;
 

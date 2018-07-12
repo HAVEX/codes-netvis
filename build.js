@@ -6,6 +6,9 @@ module.exports = {
         "codes-netvis": "./index.js",
         "codes-netvis.min": "./index.js"
     },
+    resolve: {
+        modules: [path.resolve(__dirname, '../../ppstack'), 'node_modules']
+    },
     devtool: "source-map",
     target: 'web',
     output: {

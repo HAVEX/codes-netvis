@@ -109,7 +109,8 @@ export default function circularVis(config, spec, data) {
     spec[0].data = getConnections(result, connSpec);
     spec[0].type = 'link';
     spec[0].size = Object.keys(spec[0].vmap).length;
-
+    spec[0].legend = true;
+    
     spec.slice(1).forEach(function(s){
         if(!s.vmap) return;
         var entity = s.project,
@@ -121,12 +122,14 @@ export default function circularVis(config, spec, data) {
             c.routers.forEach(function(router, ri){
                 cData = cData.concat(router[entity]);
             });
-            return aggregate(cData, metrics);
+            
+            return (cData.length) ? aggregate(cData, metrics) : [];
         });
 
         console.log(s.data);
         s.type = visType[Object.keys(s.vmap).length-1];
         s.size = Object.keys(spec[0].vmap).length;
+        s.legend = true;
     })
 
     if(spec[spec.length-1].type !== 'text') {
