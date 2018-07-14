@@ -68,7 +68,8 @@ function getConnections(data, spec) {
     return aggrLinks;
 }
 
-export default function circularVis(config, spec, data) {
+export default function circularVis(config, specification, data) {
+    var spec =  specification.slice();
     console.log('SPEC((((()))))', spec);
 
     var entity = spec[0].project || 'global_links',
@@ -126,16 +127,19 @@ export default function circularVis(config, spec, data) {
             return (cData.length) ? aggregate(cData, metrics) : [];
         });
 
-        console.log(s.data);
+        // console.log(s.data);
         s.type = visType[Object.keys(s.vmap).length-1];
         s.size = Object.keys(spec[0].vmap).length;
         s.legend = true;
     })
 
     if(spec[spec.length-1].type !== 'text') {
+        var labels = result.map(function(d){return d[aggrAttr]});
+
+        console.log(labels)
         spec.push({
             type: 'text',
-            data: result.map(function(d){return d[aggrAttr]}),
+            data: labels,
             size: 1,
             prefix: LABLE_PREFIX[aggrAttr] || ''
         });

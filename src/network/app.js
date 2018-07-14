@@ -1,10 +1,13 @@
 import {Layout, Panel, List, Button, Icon} from 'dashi';
 import transform from './transform';
 import circularVis from './circularvis';
-import specifications from './projections';
+
 import gui from'./gui';
 
+
 export default function netApp(arg) {
+    var specifications = arg.specs || [];
+
     var network = {},
         data = arg.data|| null,
         onUpdate = arg.onupdate || arg.onUpdate || function() {},
@@ -28,6 +31,8 @@ export default function netApp(arg) {
             // },
         ]
     });
+
+    network.ready = function() {};
 
     var views = {},
         visSpec = [];
@@ -56,23 +61,6 @@ export default function netApp(arg) {
     //     header: {height: 0.05, style: {backgroundColor: '#F4F4F4'}}
     // });
 
-
-    var projectionSelection = document.createElement('select');
-    projectionSelection.style.marginRight = '5px';
-    Object.keys(specifications).forEach(function(sk){
-        var option = document.createElement('option');
-        option.value = sk;
-        option.innerHTML = sk;
-        projectionSelection.appendChild(option);
-    })
-
-    projectionSelection.onchange = function(){
-        editor.setValue("");
-        editor.session.insert({row:0, column: 0}, JSON.stringify(specifications[this.value], null, 2));
-    };
-
-    views.editor.header.append('<span>Template: </span>');
-    views.editor.header.append(projectionSelection);
     var editorDiv = document.createElement('div');
     editorDiv.setAttribute('id', 'spec-editor');
     editorDiv.style.width = "100%";
@@ -90,9 +78,15 @@ export default function netApp(arg) {
     editorDiv.style.display = 'none';
     guiDiv.style.display = 'block';
 
+    var projectionSelection = document.createElement('select');
+
     var specGUI = gui({
         container: 'spec-gui',
-        onsave: function(d) { console.log(d);}
+        onsave: function(spec) { 
+            db.specs.put(spec);
+            specifications.push(spec);
+            projectionSelection.innerHTML += '<option value="' + spec.name + '" selected="selected">' + spec.name + '</option>';
+        }
     });
 
     var showEditor = false;
@@ -105,40 +99,59 @@ export default function netApp(arg) {
     editor.setOptions({
         fontSize: "15pt"
     });
-    visSpec = specifications[Object.keys(specifications)[1]];
-    specGUI.create(visSpec);
-    editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
 
-    var config = {
-        container: '#panel-network-body',
-        width: views.network.innerWidth,
-        height:  views.network.innerHeight,
-        padding: 0,
-    };
+    listSpecs();
 
-    views.editor.header.append(new Icon({
-        types: ['edit outline', 'large'],
-        onclick: function(){
+    function listSpecs() {
+        visSpec = specifications[0].spec;
+        specGUI.create(visSpec);
+        editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
+    
+       
+        projectionSelection.style.marginRight = '5px';
+        specifications.forEach(function(spec){
+            var option = document.createElement('option');
+            option.value = spec.name;
+            option.innerHTML = spec.name;
+            projectionSelection.appendChild(option);
+        })
+    
+        projectionSelection.onchange = function(){
+            var sel = this.value;
+            var newSpec = specifications.filter(d=>d.name == sel)[0].spec;
 
-            if(showEditor) {
-                visSpec = JSON.parse(editor.getValue());
-                specGUI.create(visSpec);
-                this.className = this.className.replace(' blue', '');
-            } else {
-                visSpec = specGUI.getSpec();
-                editor.setValue("")
-                editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
+            specGUI.create(newSpec);
 
-                this.className += ' blue';
+            editor.setValue("");
+            editor.session.insert({row:0, column: 0}, JSON.stringify(newSpec, null, 2));
+        };
+    
+        views.editor.header.append('<span>Template: </span>');
+        views.editor.header.append(projectionSelection);
+
+        views.editor.header.append(new Icon({
+            types: ['edit outline', 'large'],
+            onclick: function(){
+    
+                if(showEditor) {
+                    visSpec = JSON.parse(editor.getValue());
+                    specGUI.create(visSpec);
+                    this.className = this.className.replace(' blue', '');
+                } else {
+                    visSpec = specGUI.getSpec();
+                    editor.setValue("")
+                    editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
+    
+                    this.className += ' blue';
+                }
+    
+                showEditor = !showEditor;
+                editorDiv.style.display = (showEditor) ? 'block': 'none';
+                guiDiv.style.display = (showEditor) ? 'none': 'block';
             }
+        }))
 
-            showEditor = !showEditor;
-            editorDiv.style.display = (showEditor) ? 'block': 'none';
-            guiDiv.style.display = (showEditor) ? 'none': 'block';
-        }
-    }))
-
-    var updateButton = new Button({
+        var updateButton = new Button({
             label: 'Update',
             types: ['green', 'xs', 'icon', 'refresh'],
             size: '0.65em',
@@ -152,8 +165,23 @@ export default function netApp(arg) {
             circularVis(config, visSpec, data);
             network.onUpdate(visSpec);
             }
-    });
-    views.editor.header.append(updateButton);
+        });
+        views.editor.header.append(updateButton);
+
+        network.ready(specifications);
+    }
+
+
+
+    var config = {
+        container: '#panel-network-body',
+        width: views.network.innerWidth,
+        height:  views.network.innerHeight,
+        padding: 0,
+    };
+
+
+
 
     network.update = function(input) {
         data = transform(input);
@@ -167,6 +195,10 @@ export default function netApp(arg) {
     }
 
     network.onUpdate = onUpdate;
+
+    network.getSpecifications = function() {
+        return specifications;
+    }
 
     return network;
 }

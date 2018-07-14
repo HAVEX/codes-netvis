@@ -1,10 +1,8 @@
-import loadData from './loadData';
-import loadDataCustom from './loadDflyCustom';
 import {Layout, Panel, Button, Table, List} from 'dashi';
-import Dexie from 'dexie';
-import defaultDatasets from '../data/datasets.js';
+
 import dragonflyCustom from './model/dragonfly-custom';
 import dragonfly from './model/dragonfly';
+
 
 
 const newDatasetForm = `
@@ -30,11 +28,10 @@ const newDatasetForm = `
 export default function dataManagement(arg) {
     var dataManager = {},
         options = arg || {},
-        container = options.container,
-        oncancel = options.oncancel || function(){},
-        onselect = options.onselect || function(){};
+        container = options.container;
+
   
-    var datasets = [];
+    var datasets = arg.datasets || [];
 
     var dataPanel = new Panel({
         container: document.getElementById(container),
@@ -55,44 +52,15 @@ export default function dataManagement(arg) {
         cols: ['', 'Dataset ID', 'Topology Model', '#Groups', 'Description', 'Action']
     });
 
-    dataManager.onselect = onselect;
+    dataManager.onselect = function(){};
+    dataManager.ready = function(){};
     // dataManager.data = datasets[Object.keys(datasets)[0]];
 
-    var db = new Dexie("codes-vis-datasets");
-    db.version(1).stores({
-        datasets: 'name,topology,groups,data'
+    datasets.forEach(function(dataset, di){
+        addDataRow(di, dataset)
     });
 
-    // db.datasets.clear();
-    db.datasets.count().then(function(datasetCount) {
-        console.log('total datasets = ', datasetCount)
-        if(datasetCount == 0) {
-            // datasets = defaultDatasets;
-            defaultDatasets.forEach(function(ds, dsi){
-                var loadDataset = (ds.topology == 'Dragonfly') ? loadData : loadDataCustom;
-                loadDataset(ds).then(function(data){
-                    return db.datasets.add({name: ds.name, topology: ds.topology, groups: ds.groups, data: data});
-                }).then(function(){
-                    return db.datasets.toArray();
-                }).then(function(ds){
-                    datasets.push(ds[0]);
-                    addDataRow(dsi, ds[0]);
-                });
-            });
-        } else {
-            db.datasets.toArray().then(function(ds){
-                datasets = ds;
-                console.log(datasets);
-                datasets.forEach(function(dataset, di){
-                    addDataRow(di, dataset)
-                });
-            });
-        }
-
-    });
-
-
-
+    dataManager.ready(datasets);
 
     function addDataRow(id, dataset) {
         dataList.addRow([
@@ -201,6 +169,9 @@ export default function dataManagement(arg) {
 
     $('#codes-vis-data-model').dropdown();
 
+    dataManager.getDatasets = function() {
+        return datasets;
+    }
 
     return dataManager;
 }

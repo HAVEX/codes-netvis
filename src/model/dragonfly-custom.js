@@ -1,4 +1,5 @@
 import p6Solo from 'p6-solo';
+import p6 from 'p6';
 
 const TERMINAL_SCHEMA = {
     "lp_id"                 : "int", 

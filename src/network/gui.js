@@ -7,7 +7,7 @@ var template = '' +
   '<div class="fields"  style="width: 100%; background: #EEE; padding: 20px;">' +
     '<div class="sixteen wide field">' +
       '<label>Aggregate by</label>' +
-      '<select class="ui search dropdown" id="aggregation-attr">' +
+      '<select class="ui fluid dropdown" id="aggregation-attr">' +
       '</select>' +
     '</div>' +
     // '<div class="four wide field">' +
@@ -33,13 +33,13 @@ var template = '' +
       '<button id="remove-layer" class="ui button red xs">Remove Layer</button>' +
     '</div>' +
     '<div class="six wide field ui action input">' +
-      '<input type="text" placeholder="Name this config...">' +
+      '<input type="text" id="spec-name" placeholder="Name this config...">' +
       '<button id="save-spec" class="ui button primary xs">Save</button>' +
     '</div>' +
   '</div>' +
 '</div>';
 
-var layers = [];
+
 
 var colorSchemes = [
     ["#eee", 'steelblue'],
@@ -89,6 +89,9 @@ var metrics = {
 }
 
 export default function GUI(arg) {
+
+    var layers = [];
+
     var options = arg || {},
         container = options.container,
         onSave = options.onsave || options.onSave || function(){};
@@ -118,7 +121,7 @@ export default function GUI(arg) {
             colorAttr = vmap.color || null,
             xAttr = vmap.x || null,
             yAttr = vmap.y || null,
-            colorMap = spec.colors,
+            colorMap = spec.colors || ["steelblue", "red"],
             aggregate = spec.aggregate || false;
 
         if(arg && !spec.vmap) return;
@@ -144,11 +147,9 @@ export default function GUI(arg) {
             updateSelection(encoding, metrics[en], colorAttr);
         }
 
-
         field1.append(projection);
         td1.append(field1);
         td2.append(field2);
-
 
         var colorMenuDiv = $('<div/>')
             .addClass('ui fluid selection dropdown')
@@ -158,7 +159,6 @@ export default function GUI(arg) {
 
         colorMenuDiv.append($('<i/>').addClass('dropdown icon'));
         colorMenuDiv.append(colorDisplay);
-
         colorMenuDiv.append(colorMenu);
 
         colorDisplay.append(
@@ -259,10 +259,19 @@ export default function GUI(arg) {
 
     $("#add-layer").click(function(){
         layers.push(createLayer());
+        $('.item.active.selected').trigger('click');
+
     })
 
     $("#save-spec").click(function(){
-        onSave(getSpec());
+        var specName = $('#spec-name').val();
+        if(specName) {
+            onSave({
+                name: specName, 
+                spec: getSpec()
+            });
+        }
+
     })
 
     $("#remove-layer").click(function(){
@@ -277,6 +286,7 @@ export default function GUI(arg) {
     }
 
     function createGUI(specs) {
+        layers = [];
         updateSelection(
             $('#aggregation-attr'),
             ['group_id', 'router_rank', 'job_id', 'traffic', 'sat_time'],

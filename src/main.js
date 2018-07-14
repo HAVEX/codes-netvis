@@ -1,12 +1,22 @@
 import dataManagement from "./datamgmt";
 import stats from "./stats/app";
 import network from "./network/app";
+import contrast from "./contrast/app";
+import Dexie from 'dexie';
+import defaultSpecs from './network/projections';
+import defaultDatasets from '../data/datasets.js';
+
+import loadData from './loadData';
+import loadDataCustom from './loadDflyCustom';
+
+
+
 
 
 export default function App() {
-    let pageHeaderHeight = $('#page-header').height() + 20;
-
-    $("#page-network, #page-stats, #page-tseries")
+    var pageHeaderHeight = $('#page-header').height() + 20;
+   
+    $("#page-network, #page-contrast")
     .css({
         height: $("body").height() - pageHeaderHeight,
         'margin-top': pageHeaderHeight + 'px'
@@ -15,8 +25,9 @@ export default function App() {
     $('.ui.large.modal')
         .modal('observeChanges', true).modal('hide');
 
-    $('#page-network').transition('fade down');
-    $('#page-tseries').transition('fade down');
+    // $('#page-network').transition('fade down');
+    $('#page-contrast').transition('fade down');
+    // $('#page-tseries').transition('fade down');
 
     $('.ui.sidebar')
         .sidebar({
@@ -38,33 +49,51 @@ export default function App() {
 
         $(this).addClass('active');
         $(this.getAttribute('href')).transition('fade down');
-
+        
     });
 
-    let boards = {};
+    $('.ui.large.modal').modal('toggle');
 
-    boards.stats = stats({
-        container: 'page-stats',
-    });
+    var boards = {};
+    var specifications;
 
-    boards.network = network({
-        container: 'page-network',
-        onupdate: function(spec) {
+    function initApp(datasets, specifications) {
+        // boards.stats = stats({
+        //     container: 'page-stats',
+        // });
+
+        boards.contrast = contrast({
+            container: 'page-contrast',
+            datasets: datasets,
+            specs: specifications
+        })
+
+
+        boards.network = network({
+            container: 'page-network',
+            specs: specifications,
+            onupdate: function(spec) {
+
+            }
+        });
+
+        boards.ready = function(specifications) {
 
         }
-    });
+        // boards.tseries = timeseries({
+        //     container: 'page-tseries'
+        // })
 
-    // boards.tseries = timeseries({
-    //     container: 'page-tseries'
-    // })
+        // $.getJSON('data/datasets.json', function(data){
+        //     console.log(data);
+        // });
+    
+        var dataMgmt = dataManagement({
+            container: 'data-list',
+            datasets: datasets
+        });
 
-    // $.getJSON('data/datasets.json', function(data){
-    //     console.log(data);
-    // });
-    $('.ui.large.modal').modal('toggle');
-    dataManagement({
-        container: 'data-list',
-        onselect: function(data) {
+        dataMgmt.onselect = function(data) {
             // console.log(data)
             // boards.stats.update(data);
             boards.network.update(data);
@@ -75,11 +104,52 @@ export default function App() {
             // }
             // boards.tseries.update(visSpec, data, metadata);
             $('.ui.large.modal').modal('toggle');
-        },
-        oncancel: function(d) {
-            $('.ui.large.modal').modal('toggle');
-        }
+        };
+
+        // dataMgmt.ready = function(datasets) {
+        //     boards.contrast.updateDatasets(datasets);
+        // }
+
+    }
+
+
+
+    var db = new Dexie("codes-netvis");
+    db.version(1).stores({
+        datasets: 'name,topology,groups,data',
+        specs: 'name,spec'
     });
+
+    db.specs.count().then(function(specCount) {
+        console.log(specCount);
+        if(specCount == 0) {
+            specifications = defaultSpecs;
+            var datasetCount = 0;
+            db.specs.bulkPut(defaultSpecs).then(function(spec) {
+                defaultDatasets.forEach(function(ds, dsi){
+                    var loadDataset = (ds.topology == 'Dragonfly') ? loadData : loadDataCustom;
+                    loadDataset(ds).then(function(data){
+                        return db.datasets.add({name: ds.name, topology: ds.topology, groups: ds.groups, data: data});
+                    }).then(function(){
+                        return db.datasets.toArray();
+                    }).then(function(ds){
+                        datasetCount++;
+                        if(datasetCount == defaultDatasets.length) window.location.reload();
+                    });
+                });
+            })
+        } else {
+            db.specs.toArray().then(function(specs){
+                specifications = specs;
+                console.log(specs)
+                return db.datasets.toArray();
+            })
+            .then(function(datasets){
+                initApp(datasets, specifications)
+            })
+        }
+    })
+
     // $('.ui.dropdown').dropdown();
     // $('.ui.checkbox').checkbox();
 }
