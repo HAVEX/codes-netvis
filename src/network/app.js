@@ -11,7 +11,8 @@ export default function netApp(arg) {
     var network = {},
         data = arg.data|| null,
         onUpdate = arg.onupdate || arg.onUpdate || function() {},
-        container = arg.container || document.body;
+        container = arg.container || document.body,
+        onSave = arg.onsave || function() {};
 
     var layoutMain = new Layout({
         container: container,
@@ -83,9 +84,10 @@ export default function netApp(arg) {
     var specGUI = gui({
         container: 'spec-gui',
         onsave: function(spec) { 
-            db.specs.put(spec);
+            onSave(spec);
             specifications.push(spec);
             projectionSelection.innerHTML += '<option value="' + spec.name + '" selected="selected">' + spec.name + '</option>';
+           
         }
     });
 

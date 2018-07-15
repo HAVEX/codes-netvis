@@ -13,17 +13,25 @@ export default function netApp(arg) {
     var specs = arg.specs || [];
 
     var contrastSpec = specs[0].spec;
+    var dataset = {
+        left: [],
+        right: []
+    };
 
     var dashboard = new Layout({
         container: container,
         margin: 10,
         cols: [
             {
-                width: 0.5,
+                width: 0.4,
                 id: 'view-left'
             },
             {
-                width: 0.5,
+                width: 0.2,
+                id: 'view-center',
+            },
+            {
+                width: 0.4,
                 id: 'view-right'
             }
         ]
@@ -42,7 +50,33 @@ export default function netApp(arg) {
         title: "",
         header: {height: 0.05, style: {backgroundColor: '#F4F4F4'}}
     });
+
+    var centerPanel = new Panel({
+        container: dashboard.cell('view-center'),
+        id: "panel-center",
+        title: "Specifications",
+        header: {height: 0.05, style: {backgroundColor: '#F4F4F4'}},
+        style: {
+            padding: '10px'
+        }
+    });
+
+    var specList = new List({
+        types: ['relaxed', 'divided', 'selection', 'single'],
+        selectedColor: 'steelblue',
+        onselect: function(specId) {
+            contrastSpec = specs[specId].spec;
+            updateView(dataset.left, views.left);
+            updateView(dataset.right, views.right);
+        }
+    });
+
+    specs.forEach(function(spec){
+        specList.append({header: spec.name});
+    })
     
+
+    centerPanel.append(specList)
 
 
     Object.keys(views).forEach(function(view){
@@ -59,24 +93,22 @@ export default function netApp(arg) {
         views[view].header.append('<span>Dataset: </span>');
         views[view].header.append(views[view].sel);
         
-        var config = {
-            container: '#'+views[view].id + '-body',
-            width: views[view].innerWidth,
-            height: views[view].innerHeight,
-            padding: 0,
-        };
-
-
         views[view].sel.onchange = function() {
-            var dataset = datasets.filter(d=>d.name == this.value)[0];
-            views[view].clear();
-            updateView(dataset, config);
+            dataset[view] = datasets.filter(d=>d.name == this.value)[0];
+            updateView(dataset[view], views[view]);
         }
     });
     
    
-    function updateView(dataset,  config) {
-
+    function updateView(dataset, container) {
+        if(!dataset.data) return;
+        var config = {
+            container: '#'+container.id + '-body',
+            width: container.innerWidth,
+            height: container.innerHeight,
+            padding: 0,
+        };
+        container.clear();
         var networkModel = (dataset.topology == 'Dragonfly') ? dragonfly : dragonflyCustom;
         
         networkModel(dataset.data, {groups: dataset.groups})

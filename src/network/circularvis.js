@@ -25,6 +25,8 @@ const LABLE_PREFIX = {
     group_id: 'group '
 }
 
+const HIST_METRICS = ['group_id',  'global_traffic', 'local_traffic', 'terminal_traffic', 'global_saturation', 'local_saturation', 'terminal_saturation'];
+
 function getConnections(data, spec) {
     var partTotal = data.length || 0,
         entity = Object.keys(spec)[0] || spec,
@@ -71,13 +73,24 @@ function getConnections(data, spec) {
 export default function circularVis(config, specification, data) {
     var spec =  specification.slice();
     console.log('SPEC((((()))))', spec);
-
+    console.log(data);
     var entity = spec[0].project || 'global_links',
         aggrAttr = spec[0].aggregate || 'router_rank',
         aggrSpec = {},
         binMax = spec[0].binMax || 11;
 
-    if(aggrAttr == 'group_id') {
+    var createHistogram = (HIST_METRICS.indexOf(aggrAttr) != -1);
+
+    if (spec[0].filter && spec[0].filter.group_id && (spec[0].filter.group_id[1] - spec[0].filter.group_id[0] < binMax)) {
+        createHistogram = false;
+    }
+
+    var proc = pipeline();
+
+    if(spec[0].filter)
+        proc.match(spec[0].filter);
+
+    if( createHistogram) {
         aggrSpec = {};
         aggrSpec.$bin = {};
         aggrSpec.$bin[aggrAttr] = binMax;
@@ -88,22 +101,22 @@ export default function circularVis(config, specification, data) {
     aggrSpec.$collect = {routers: {$data: '*'}};
     const visType = ['bar', 'bar', 'heatmap', 'scatter'];
 
-    var proc = pipeline();
-
-    if(spec[0].filter)
-        proc.match(spec[0].filter);
-
     proc.aggregate(aggrSpec);
-
     var result = proc.execute(data);
 
-    if(aggrAttr == 'group_id') {
+    if(createHistogram) {
         result.forEach(function(res){
-            var max = arrays.max(res.routers.map(function(d){return d.group_id;})),
-                min = arrays.min(res.routers.map(function(d){return d.group_id;}));
-            res.group_id = min + "-" + max;
+            var max = arrays.max(res.routers.map(function(d){
+                return (aggrAttr != 'group_id') ? d3.format('.3s')(d[aggrAttr]) : d[aggrAttr];
+            }));
+            var min = arrays.min(res.routers.map(function(d){
+                return (aggrAttr != 'group_id') ? d3.format('.3s')(d[aggrAttr]) : d[aggrAttr];
+            }));
+            res[aggrAttr] = min + "-" + max;
         })
     }
+
+    console.log(result);
 
     var connSpec = {};
     connSpec[entity] = METRICS[entity];
@@ -135,8 +148,6 @@ export default function circularVis(config, specification, data) {
 
     if(spec[spec.length-1].type !== 'text') {
         var labels = result.map(function(d){return d[aggrAttr]});
-
-        console.log(labels)
         spec.push({
             type: 'text',
             data: labels,

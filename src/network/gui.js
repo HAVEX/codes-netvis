@@ -5,10 +5,8 @@ import * as d3ColorChromatic from 'd3-scale-chromatic';
 var template = '' +
 '<div id="specUI" class="ui form" style=" padding: 20px;">' +
   '<div class="fields"  style="width: 100%; background: #EEE; padding: 20px;">' +
-    '<div class="sixteen wide field">' +
+    '<div class="sixteen wide field" id="transform-attributes">' +
       '<label>Aggregate by</label>' +
-      '<select class="ui fluid dropdown" id="aggregation-attr">' +
-      '</select>' +
     '</div>' +
     // '<div class="four wide field">' +
     //   '<label>BinMax</label>' +
@@ -39,7 +37,17 @@ var template = '' +
   '</div>' +
 '</div>';
 
-
+const AGGR_METRICS = [
+    'group_id',
+    'router_rank',
+    'job_id',
+    'global_traffic',
+    'local_traffic',
+    'terminal_traffic',
+    'global_saturation',
+    'local_saturation',
+    'terminal_saturation'
+];
 
 var colorSchemes = [
     ["#eee", 'steelblue'],
@@ -65,14 +73,12 @@ var entities = [
 const METRICS_NULL = ' --- ';
 
 var linkMetrics = [
-    METRICS_NULL,
     'traffic',
     'sat_time',
     'traffic + sat_time'
 ];
 
 var terminalMetrics = [
-    METRICS_NULL,
     'avg_packet_latency',
     'avg_hops',
     'data_size',
@@ -99,14 +105,20 @@ export default function GUI(arg) {
     $('#'+container).html(template);
 
     var aggrAttr = 'router_rank';
+    var aggrAttrSelection = $('<select/>').addClass('ui fluid dropdown');
+    $('#transform-attributes').append(aggrAttrSelection);
 
     function updateSelection(sel, options, selectedAttr) {
         var index = (options.indexOf(selectedAttr) > -1) ? options.indexOf(selectedAttr) : 0;
+        console.log(selectedAttr, index);
         sel.html('');
         sel.dropdown();
         options.forEach(function(opt, ii){
             var item = $('<option/>');
-            // if(ii == index) item.addClass('active selected');
+            if(ii == index) {
+                item.addClass('active selected');
+            } 
+
             sel.append(item.attr('value', opt).text(opt));
         })
         sel.dropdown('set value', options[index]);
@@ -253,9 +265,7 @@ export default function GUI(arg) {
         });
     }
 
-    $('#aggregation-attr').change(function(){
-        aggrAttr = $(this).val();
-    })
+
 
     $("#add-layer").click(function(){
         layers.push(createLayer());
@@ -287,9 +297,15 @@ export default function GUI(arg) {
 
     function createGUI(specs) {
         layers = [];
+        $('#transform-attributes').html('');
+        var aggrAttrSelection = $('<select/>').addClass('ui fluid dropdown');
+        aggrAttrSelection.change(function(){
+            aggrAttr = $(this).val();
+        })
+        $('#transform-attributes').append(aggrAttrSelection);
         updateSelection(
-            $('#aggregation-attr'),
-            ['group_id', 'router_rank', 'job_id', 'traffic', 'sat_time'],
+            aggrAttrSelection,
+            AGGR_METRICS,
             specs[0].aggregate
         );
         aggrAttr = specs[0].aggregate;

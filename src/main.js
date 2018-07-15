@@ -11,8 +11,6 @@ import loadDataCustom from './loadDflyCustom';
 
 
 
-
-
 export default function App() {
     var pageHeaderHeight = $('#page-header').height() + 20;
    
@@ -57,6 +55,13 @@ export default function App() {
     var boards = {};
     var specifications;
 
+
+    var db = new Dexie("codes-netvis");
+    db.version(1).stores({
+        datasets: 'name,topology,groups,data',
+        specs: 'name,spec'
+    });
+
     function initApp(datasets, specifications) {
         // boards.stats = stats({
         //     container: 'page-stats',
@@ -72,8 +77,8 @@ export default function App() {
         boards.network = network({
             container: 'page-network',
             specs: specifications,
-            onupdate: function(spec) {
-
+            onsave: function(spec) {
+                db.specs.put(spec);
             }
         });
 
@@ -112,13 +117,6 @@ export default function App() {
 
     }
 
-
-
-    var db = new Dexie("codes-netvis");
-    db.version(1).stores({
-        datasets: 'name,topology,groups,data',
-        specs: 'name,spec'
-    });
 
     db.specs.count().then(function(specCount) {
         console.log(specCount);
