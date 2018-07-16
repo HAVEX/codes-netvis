@@ -25621,7 +25621,7 @@ process.umask = function() { return 0; };
 /* harmony default export */ __webpack_exports__["a"] = ([
     {
         name: 'AMG on Dragonfly Adaptive',
-        path: 'codes-data/tutorial/dfly-2550-adaptive-amg-1728',
+        path: '/codes-data/tutorial/dfly-2550-adaptive-amg-1728',
         topology: 'Dragonfly',
         groups: 51,
         routers: 510,
@@ -25629,7 +25629,7 @@ process.umask = function() { return 0; };
     },
     {
         name: 'Dragonfly Dally Uniform Random Traffic',
-        path: 'codes-data/tutorial/dfly-dally-rand',
+        path: '/codes-data/tutorial/dfly-dally-rand',
         topology: 'Dragonfly 1-D',
         groups: 65,
         routers: 1040,
@@ -25639,7 +25639,7 @@ process.umask = function() { return 0; };
     },
     {
         name: 'Dragonfly Plus Uniform Random Traffic',
-        path: 'codes-data/tutorial/dfly-plus-rand',
+        path: '/codes-data/tutorial/dfly-plus-rand',
         topology: 'Dragonfly Plus',
         groups: 33,
         routers: 1056,
