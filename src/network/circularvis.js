@@ -72,8 +72,8 @@ function getConnections(data, spec) {
 
 export default function circularVis(config, specification, data) {
     var spec =  specification.slice();
-    console.log('SPEC((((()))))', spec);
-    console.log(data);
+    // console.log('SPEC((((()))))', spec);
+    // console.log(data);
     var entity = spec[0].project || 'global_links',
         aggrAttr = spec[0].aggregate || 'router_rank',
         aggrSpec = {},
@@ -116,14 +116,11 @@ export default function circularVis(config, specification, data) {
         })
     }
 
-    console.log(result);
-
     var connSpec = {};
     connSpec[entity] = METRICS[entity];
     spec[0].data = getConnections(result, connSpec);
     spec[0].type = 'link';
     spec[0].size = Object.keys(spec[0].vmap).length;
-    spec[0].legend = true;
     
     spec.slice(1).forEach(function(s){
         if(!s.vmap) return;
@@ -143,7 +140,6 @@ export default function circularVis(config, specification, data) {
         // console.log(s.data);
         s.type = visType[Object.keys(s.vmap).length-1];
         s.size = Object.keys(spec[0].vmap).length;
-        s.legend = true;
     })
 
     if(spec[spec.length-1].type !== 'text') {

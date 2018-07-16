@@ -5834,8 +5834,8 @@ function getConnections(data, spec) {
 
 function circularVis(config, specification, data) {
     var spec =  specification.slice();
-    console.log('SPEC((((()))))', spec);
-    console.log(data);
+    // console.log('SPEC((((()))))', spec);
+    // console.log(data);
     var entity = spec[0].project || 'global_links',
         aggrAttr = spec[0].aggregate || 'router_rank',
         aggrSpec = {},
@@ -5878,14 +5878,11 @@ function circularVis(config, specification, data) {
         })
     }
 
-    console.log(result);
-
     var connSpec = {};
     connSpec[entity] = METRICS[entity];
     spec[0].data = getConnections(result, connSpec);
     spec[0].type = 'link';
     spec[0].size = Object.keys(spec[0].vmap).length;
-    spec[0].legend = true;
     
     spec.slice(1).forEach(function(s){
         if(!s.vmap) return;
@@ -5905,7 +5902,6 @@ function circularVis(config, specification, data) {
         // console.log(s.data);
         s.type = visType[Object.keys(s.vmap).length-1];
         s.size = Object.keys(spec[0].vmap).length;
-        s.legend = true;
     })
 
     if(spec[spec.length-1].type !== 'text') {
@@ -7842,10 +7838,11 @@ function colorLegend(arg){
     var legend;
     if(container === null) {
         legend = d3.select(document.createElementNS('http://www.w3.org/2000/svg', 'svg'));
+        legend.attr("width", width).attr("height", height);
     } else {
         legend = container;
     } 
-    legend.attr("width", width).attr("height", height);
+    
     var rect = legend.append("g");
    
     if(container !== null){
@@ -7887,6 +7884,8 @@ function colorLegend(arg){
 
     var rect = legend.append("g");
 
+    rect.attr('transform', 'translate(' + padding.left + ', ' + padding.right + ')');
+
     var colorScale = rect.append("rect")
         .attr("x", pos[0])
         .attr("y", pos[1])
@@ -7895,16 +7894,16 @@ function colorLegend(arg){
         .style("fill","url(#gradlegend" + gradientID + ")");
 
     if(!noLabel) {
-        legend.append("text")
-            .attr("x", pos[0] - 5)
+        rect.append("text")
+            .attr("x", pos[0])
             .attr("y", pos[1] + height/2 + 5)
             .style("fill", "#222")
             .style("text-anchor", 'end')
             // .style("font-size", ".9em")
             .text(format(domain[0]));
 
-        legend.append("text")
-            .attr("x", pos[0] + width - padding.left + 5)
+        rect.append("text")
+            .attr("x", pos[0] + width - padding.left)
             .attr("y", pos[1] + height/2 + 5)
             .style("fill", "#222")
             .style("text-anchor", 'begin')
@@ -7913,10 +7912,10 @@ function colorLegend(arg){
     }
 
     if(option.title) {
-        legend.append("g")
+        rect.append("g")
             .append("text")
-            .attr("y", pos[1] - padding.top)
-            .attr("x", pos[0] + width/2)
+            .attr("y", pos[1] - height/2 - 5)
+            .attr("x", pos[0] + width/2 - 5)
             .attr("dy", "1em")
             .style("text-anchor", "middle")
             .text(option.title);
@@ -8202,7 +8201,7 @@ Object(__WEBPACK_IMPORTED_MODULE_0__src_main_js__["a" /* default */])();
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__contrast_app__ = __webpack_require__(331);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_dexie__ = __webpack_require__(332);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__network_projections__ = __webpack_require__(336);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__data_datasets_js__ = __webpack_require__(337);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__codes_data_datasets_js__ = __webpack_require__(337);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__loadData__ = __webpack_require__(70);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__loadDflyCustom__ = __webpack_require__(338);
 
@@ -8331,7 +8330,7 @@ function App() {
             specifications = __WEBPACK_IMPORTED_MODULE_5__network_projections__["a" /* default */];
             var datasetCount = 0;
             db.specs.bulkPut(__WEBPACK_IMPORTED_MODULE_5__network_projections__["a" /* default */]).then(function(spec) {
-                __WEBPACK_IMPORTED_MODULE_6__data_datasets_js__["a" /* default */].forEach(function(ds, dsi){
+                __WEBPACK_IMPORTED_MODULE_6__codes_data_datasets_js__["a" /* default */].forEach(function(ds, dsi){
                     var loadDataset = (ds.topology == 'Dragonfly') ? __WEBPACK_IMPORTED_MODULE_7__loadData__["a" /* default */] : __WEBPACK_IMPORTED_MODULE_8__loadDflyCustom__["a" /* default */];
                     loadDataset(ds).then(function(data){
                         return db.datasets.add({name: ds.name, topology: ds.topology, groups: ds.groups, data: data});
@@ -8339,7 +8338,7 @@ function App() {
                         return db.datasets.toArray();
                     }).then(function(ds){
                         datasetCount++;
-                        if(datasetCount == __WEBPACK_IMPORTED_MODULE_6__data_datasets_js__["a" /* default */].length) window.location.reload();
+                        if(datasetCount == __WEBPACK_IMPORTED_MODULE_6__codes_data_datasets_js__["a" /* default */].length) window.location.reload();
                     });
                 });
             })
@@ -14396,27 +14395,25 @@ function netApp(arg) {
         width: views.network.innerWidth,
         height:  views.network.innerHeight,
         padding: 0,
+        legend: true
     };
-
-
-
-
+    
     network.update = function(input) {
         data = Object(__WEBPACK_IMPORTED_MODULE_1__transform__["a" /* default */])(input);
         views.network.clear();
         visSpec = JSON.parse(editor.getValue());
         Object(__WEBPACK_IMPORTED_MODULE_2__circularvis__["a" /* default */])(config, visSpec, data);
-    }
+    };
 
     network.getSpec = function() {
         return visSpec;
-    }
+    };
 
     network.onUpdate = onUpdate;
 
     network.getSpecifications = function() {
         return specifications;
-    }
+    };
 
     return network;
 }
@@ -14520,7 +14517,7 @@ function hc5(spec) {
                 dataItems = dataItems.concat(layer.data[ci]);
             })
 
-            var colorDomain = getExtent(dataItems, layer.vmap.color);
+            var colorDomain = (Array.isArray(colorDomains[li])) ? colorDomains[li] : getExtent(dataItems, layer.vmap.color);
 
             getColor = Object(__WEBPACK_IMPORTED_MODULE_4__colors__["a" /* default */])(layer.colors, colorDomain);
 
@@ -14541,7 +14538,7 @@ function hc5(spec) {
 
 
         if(layer.type !== 'text' && layer.vmap) {
-            if(layer.legend) {
+            if(config.legend) {
                 if(rings[li].colorDomain) colorDomain = rings[li].colorDomain;
                 Object(__WEBPACK_IMPORTED_MODULE_3__colorlegend__["a" /* default */])({
                     container: baseSVG,
@@ -14563,7 +14560,27 @@ function hc5(spec) {
                 .attr("y", height/2 - 15)
                 .text(function(d, i) { return  chartTitle });
         }
-    })
+    });
+
+    rings.createColorLegend = function(options) { 
+        var svg = d3.select(options.container).append('svg')
+            .attr('width', options.width).attr('height', options.height);
+
+        layers.forEach(function(layer, li){
+            if(layer.type == 'text') return;
+            var colorDomain = (options.colorDomains) ? options.colorDomains[li] : rings[li].colorDomain;
+            Object(__WEBPACK_IMPORTED_MODULE_3__colorlegend__["a" /* default */])({
+                container: svg,
+                colors: layer.colors,
+                height: options.height / (layers.length-1),
+                width: options.width,
+                title: layer.project + ' (' + ((layer.vmap) ? layer.vmap.color : null) + ')',
+                domain: colorDomain,
+                padding: options.padding || {left: 25, right: 25, top: 40, bottom: 0},
+                pos: [0, options.height / (layers.length-1) * li]
+            });
+        });
+    }
 
     rings.updateColor = function(colorDomains) {
         rings.forEach(function(ring, ri){
@@ -14650,7 +14667,7 @@ function Chord(arg) {
     chord.updateColor = function(colorDomain) {
         chord.colorDomain = colorDomain;
         getColor.domain(colorDomain);
-        d3.selectAll('.ribbons').style("fill", function(d){
+        ribbons.style("fill", function(d){
             var send = data[d.source.index][d.target.index][vmap.color];
             var recv =  data[d.target.index][d.source.index][vmap.color];
             return getColor(Math.max(send, recv));
@@ -18110,7 +18127,7 @@ function bars(arg) {
     bars.updateColor = function(colorDomain) {
         bars.colorDomain = colorDomain;
         getColor.domain(colorDomain);
-        d3.selectAll(".bars").style("fill", function(d) { return getColor(d[vmap.color]); })
+        marks.style("fill", function(d) { return getColor(d[vmap.color]); })
     }
 
     return bars;
@@ -18243,8 +18260,8 @@ var terminalMetrics = [
 var metrics = {
     local_links: linkMetrics,
     global_links: linkMetrics,
-    terminals: terminalMetrics,
-}
+    terminals: terminalMetrics
+};
 
 function GUI(arg) {
 
@@ -18262,7 +18279,6 @@ function GUI(arg) {
 
     function updateSelection(sel, options, selectedAttr) {
         var index = (options.indexOf(selectedAttr) > -1) ? options.indexOf(selectedAttr) : 0;
-        console.log(selectedAttr, index);
         sel.html('');
         sel.dropdown();
         options.forEach(function(opt, ii){
@@ -18270,7 +18286,6 @@ function GUI(arg) {
             if(ii == index) {
                 item.addClass('active selected');
             } 
-
             sel.append(item.attr('value', opt).text(opt));
         })
         sel.dropdown('set value', options[index]);
@@ -18417,8 +18432,6 @@ function GUI(arg) {
         });
     }
 
-
-
     $("#add-layer").click(function(){
         layers.push(createLayer());
         $('.item.active.selected').trigger('click');
@@ -18449,7 +18462,7 @@ function GUI(arg) {
 
     function createGUI(specs) {
         layers = [];
-        $('#transform-attributes').html('');
+        $('#transform-attributes').html('<label>Aggregate by</label>');
         var aggrAttrSelection = $('<select/>').addClass('ui fluid dropdown');
         aggrAttrSelection.change(function(){
             aggrAttr = $(this).val();
@@ -18473,8 +18486,7 @@ function GUI(arg) {
         getSpec: getSpec,
         create: createGUI,
         clear: clearGUI
-    }
-
+    };
 }
 
 
@@ -20427,19 +20439,21 @@ var plasma = ramp(Object(__WEBPACK_IMPORTED_MODULE_0__colors__["a" /* default */
 
 
 
-
 function netApp(arg) {
-
     var app = {};
     var container = arg.container;
-    var datasets = arg.datasets || [];
+    var datasetList = arg.datasets || [];
     var specs = arg.specs || [];
+    var colorDomains = [];
 
     var contrastSpec = specs[0].spec;
-    var dataset = {
+    var datasets = {
         left: [],
         right: []
     };
+
+    var vis = {};
+    var domains = {};
 
     var dashboard = new __WEBPACK_IMPORTED_MODULE_0_dashi__["c" /* Layout */]({
         container: container,
@@ -20451,11 +20465,26 @@ function netApp(arg) {
             },
             {
                 width: 0.2,
-                id: 'view-center',
+                id: 'view-center'
             },
             {
                 width: 0.4,
                 id: 'view-right'
+            }
+        ]
+    });
+
+    var midCol = new __WEBPACK_IMPORTED_MODULE_0_dashi__["c" /* Layout */]({
+        container: dashboard.cell('view-center'),
+        margin: 0,
+        rows: [
+            {
+                height: 0.7,
+                id: 'col-top'
+            },
+            {
+                height: 0.3,
+                id: 'col-bottom'
             }
         ]
     });
@@ -20475,10 +20504,18 @@ function netApp(arg) {
     });
 
     var centerPanel = new __WEBPACK_IMPORTED_MODULE_0_dashi__["e" /* Panel */]({
-        container: dashboard.cell('view-center'),
-        id: "panel-center",
+        container: midCol.cell('col-top'),
+        id: "panel-specs",
         title: "Specifications",
-        header: {height: 0.05, style: {backgroundColor: '#F4F4F4'}},
+        header: {height: 0.05 / 0.7, style: {backgroundColor: '#F4F4F4'}},
+        style: {
+            padding: '10px'
+        }
+    });
+
+    var legendPanel = new __WEBPACK_IMPORTED_MODULE_0_dashi__["e" /* Panel */]({
+        container: midCol.cell('col-bottom'),
+        id: "panel-legend",
         style: {
             padding: '10px'
         }
@@ -20489,59 +20526,94 @@ function netApp(arg) {
         selectedColor: 'steelblue',
         onselect: function(specId) {
             contrastSpec = specs[specId].spec;
-            updateView(dataset.left, views.left);
-            updateView(dataset.right, views.right);
+            updateView('left');
+            updateView('right');
         }
     });
 
     specs.forEach(function(spec){
         specList.append({header: spec.name});
-    })
+    });
     
-
-    centerPanel.append(specList)
-
-
-    Object.keys(views).forEach(function(view){
-        views[view].sel = document.createElement('select');
-        views[view].sel.innerHTML = '<option> --- </option>';
-        views[view].sel.style.marginRight = '5px';
-        datasets.forEach(function(dataset){
+    centerPanel.append(specList);
+    Object.keys(views).forEach(function(side){
+        views[side].sel = document.createElement('select');
+        views[side].sel.innerHTML = '<option> --- </option>';
+        views[side].sel.style.marginRight = '5px';
+        datasetList.forEach(function(dataset){
             var option = document.createElement('option');
             option.value = dataset.name;
             option.innerHTML = dataset.name;
-            views[view].sel.appendChild(option);
+            views[side].sel.appendChild(option);
         });
 
-        views[view].header.append('<span>Dataset: </span>');
-        views[view].header.append(views[view].sel);
+        views[side].header.append('<span>Dataset: </span>');
+        views[side].header.append(views[side].sel);
         
-        views[view].sel.onchange = function() {
-            dataset[view] = datasets.filter(d=>d.name == this.value)[0];
-            updateView(dataset[view], views[view]);
+        views[side].sel.onchange = function() {
+            datasets[side] = datasetList.filter(d=>d.name == this.value)[0];
+            updateView(side);
         }
     });
     
-   
-    function updateView(dataset, container) {
+    function updateView(side) {
+        var dataset = datasets[side];
+        var view = views[side];
         if(!dataset.data) return;
         var config = {
-            container: '#'+container.id + '-body',
-            width: container.innerWidth,
-            height: container.innerHeight,
+            container: '#'+ view.id + '-body',
+            width: view.innerWidth,
+            height: view.innerHeight,
             padding: 0,
+            // legend: true
         };
-        container.clear();
+        view.clear();
         var networkModel = (dataset.topology == 'Dragonfly') ? __WEBPACK_IMPORTED_MODULE_4__model_dragonfly__["a" /* default */] : __WEBPACK_IMPORTED_MODULE_3__model_dragonfly_custom__["a" /* default */];
         
         networkModel(dataset.data, {groups: dataset.groups})
         .then(function(data){
             var dataInput = Object(__WEBPACK_IMPORTED_MODULE_1__network_transform__["a" /* default */])(data);
+            // if(colorDomains.length > 0) {
+            //     config.colorDomains = colorDomains;
+            // }
 
-            Object(__WEBPACK_IMPORTED_MODULE_2__network_circularvis__["a" /* default */])(config, contrastSpec, dataInput);
-        })
+            vis[side] = Object(__WEBPACK_IMPORTED_MODULE_2__network_circularvis__["a" /* default */])(config, contrastSpec, dataInput);
+            domains[side] = vis[side].map(v=>v.colorDomain);
+            var legendConfigs = {
+                container: '#panel-legend-body',
+                width: legendPanel.innerWidth,
+                height: legendPanel.innerHeight,
+                padding: {left: 35, right: 35, top: 50, bottom: 0},
+            };
+
+            if(vis.left !== undefined && vis.right !== undefined) {
+                var leftDomains = domains.left;
+                var rightDomains = domains.right;
+
+                for(var i = 0; i < leftDomains.length-1; i++) {
+                    colorDomains[i] = [
+                        Math.min(leftDomains[i][0], rightDomains[i][0]),
+                        Math.max(leftDomains[i][1], rightDomains[i][1])
+                    ];
+                }
+                legendConfigs.colorDomains = colorDomains;
+
+                vis.left.forEach(function(v, vi){
+                    if(typeof v.updateColor == 'function')
+                        v.updateColor(colorDomains[vi]);
+                })
+                vis.right.forEach(function(v, vi){
+                    if(typeof v.updateColor == 'function')
+                        v.updateColor(colorDomains[vi]);
+                })
 
 
+            }
+
+            legendPanel.clear();
+            vis[side].createColorLegend(legendConfigs);
+
+        });
     }
 
     return app;
@@ -25549,7 +25621,7 @@ process.umask = function() { return 0; };
 /* harmony default export */ __webpack_exports__["a"] = ([
     {
         name: 'AMG on Dragonfly Adaptive',
-        path: 'data/dfly-2550-adaptive-amg-1728',
+        path: 'codes-data/tutorial/dfly-2550-adaptive-amg-1728',
         topology: 'Dragonfly',
         groups: 51,
         routers: 510,
@@ -25557,7 +25629,7 @@ process.umask = function() { return 0; };
     },
     {
         name: 'Dragonfly Dally Uniform Random Traffic',
-        path: 'data/dfly-dally-rand',
+        path: 'codes-data/tutorial/dfly-dally-rand',
         topology: 'Dragonfly 1-D',
         groups: 65,
         routers: 1040,
@@ -25567,7 +25639,7 @@ process.umask = function() { return 0; };
     },
     {
         name: 'Dragonfly Plus Uniform Random Traffic',
-        path: 'data/dfly-plus-rand',
+        path: 'codes-data/tutorial/dfly-plus-rand',
         topology: 'Dragonfly Plus',
         groups: 33,
         routers: 1056,

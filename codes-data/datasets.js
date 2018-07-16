@@ -1,7 +1,7 @@
 export default [
     {
         name: 'AMG on Dragonfly Adaptive',
-        path: 'data/dfly-2550-adaptive-amg-1728',
+        path: 'codes-data/tutorial/dfly-2550-adaptive-amg-1728',
         topology: 'Dragonfly',
         groups: 51,
         routers: 510,
@@ -9,7 +9,7 @@ export default [
     },
     {
         name: 'Dragonfly Dally Uniform Random Traffic',
-        path: 'data/dfly-dally-rand',
+        path: 'codes-data/tutorial/dfly-dally-rand',
         topology: 'Dragonfly 1-D',
         groups: 65,
         routers: 1040,
@@ -19,7 +19,7 @@ export default [
     },
     {
         name: 'Dragonfly Plus Uniform Random Traffic',
-        path: 'data/dfly-plus-rand',
+        path: 'codes-data/tutorial/dfly-plus-rand',
         topology: 'Dragonfly Plus',
         groups: 33,
         routers: 1056,

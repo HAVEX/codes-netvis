@@ -180,27 +180,25 @@ export default function netApp(arg) {
         width: views.network.innerWidth,
         height:  views.network.innerHeight,
         padding: 0,
+        legend: true
     };
-
-
-
-
+    
     network.update = function(input) {
         data = transform(input);
         views.network.clear();
         visSpec = JSON.parse(editor.getValue());
         circularVis(config, visSpec, data);
-    }
+    };
 
     network.getSpec = function() {
         return visSpec;
-    }
+    };
 
     network.onUpdate = onUpdate;
 
     network.getSpecifications = function() {
         return specifications;
-    }
+    };
 
     return network;
 }

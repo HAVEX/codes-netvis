@@ -4,7 +4,7 @@ import network from "./network/app";
 import contrast from "./contrast/app";
 import Dexie from 'dexie';
 import defaultSpecs from './network/projections';
-import defaultDatasets from '../data/datasets.js';
+import defaultDatasets from '../codes-data/datasets.js';
 
 import loadData from './loadData';
 import loadDataCustom from './loadDflyCustom';

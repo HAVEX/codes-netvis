@@ -91,8 +91,8 @@ var terminalMetrics = [
 var metrics = {
     local_links: linkMetrics,
     global_links: linkMetrics,
-    terminals: terminalMetrics,
-}
+    terminals: terminalMetrics
+};
 
 export default function GUI(arg) {
 
@@ -110,7 +110,6 @@ export default function GUI(arg) {
 
     function updateSelection(sel, options, selectedAttr) {
         var index = (options.indexOf(selectedAttr) > -1) ? options.indexOf(selectedAttr) : 0;
-        console.log(selectedAttr, index);
         sel.html('');
         sel.dropdown();
         options.forEach(function(opt, ii){
@@ -118,7 +117,6 @@ export default function GUI(arg) {
             if(ii == index) {
                 item.addClass('active selected');
             } 
-
             sel.append(item.attr('value', opt).text(opt));
         })
         sel.dropdown('set value', options[index]);
@@ -265,8 +263,6 @@ export default function GUI(arg) {
         });
     }
 
-
-
     $("#add-layer").click(function(){
         layers.push(createLayer());
         $('.item.active.selected').trigger('click');
@@ -297,7 +293,7 @@ export default function GUI(arg) {
 
     function createGUI(specs) {
         layers = [];
-        $('#transform-attributes').html('');
+        $('#transform-attributes').html('<label>Aggregate by</label>');
         var aggrAttrSelection = $('<select/>').addClass('ui fluid dropdown');
         aggrAttrSelection.change(function(){
             aggrAttr = $(this).val();
@@ -321,7 +317,6 @@ export default function GUI(arg) {
         getSpec: getSpec,
         create: createGUI,
         clear: clearGUI
-    }
-
+    };
 }
 

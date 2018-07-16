@@ -4,19 +4,21 @@ import circularVis from '../network/circularvis';
 import dragonflyCustom from '../model/dragonfly-custom';
 import dragonfly from '../model/dragonfly';
 
-
 export default function netApp(arg) {
-
     var app = {};
     var container = arg.container;
-    var datasets = arg.datasets || [];
+    var datasetList = arg.datasets || [];
     var specs = arg.specs || [];
+    var colorDomains = [];
 
     var contrastSpec = specs[0].spec;
-    var dataset = {
+    var datasets = {
         left: [],
         right: []
     };
+
+    var vis = {};
+    var domains = {};
 
     var dashboard = new Layout({
         container: container,
@@ -28,11 +30,26 @@ export default function netApp(arg) {
             },
             {
                 width: 0.2,
-                id: 'view-center',
+                id: 'view-center'
             },
             {
                 width: 0.4,
                 id: 'view-right'
+            }
+        ]
+    });
+
+    var midCol = new Layout({
+        container: dashboard.cell('view-center'),
+        margin: 0,
+        rows: [
+            {
+                height: 0.7,
+                id: 'col-top'
+            },
+            {
+                height: 0.3,
+                id: 'col-bottom'
             }
         ]
     });
@@ -52,10 +69,18 @@ export default function netApp(arg) {
     });
 
     var centerPanel = new Panel({
-        container: dashboard.cell('view-center'),
-        id: "panel-center",
+        container: midCol.cell('col-top'),
+        id: "panel-specs",
         title: "Specifications",
-        header: {height: 0.05, style: {backgroundColor: '#F4F4F4'}},
+        header: {height: 0.05 / 0.7, style: {backgroundColor: '#F4F4F4'}},
+        style: {
+            padding: '10px'
+        }
+    });
+
+    var legendPanel = new Panel({
+        container: midCol.cell('col-bottom'),
+        id: "panel-legend",
         style: {
             padding: '10px'
         }
@@ -66,59 +91,94 @@ export default function netApp(arg) {
         selectedColor: 'steelblue',
         onselect: function(specId) {
             contrastSpec = specs[specId].spec;
-            updateView(dataset.left, views.left);
-            updateView(dataset.right, views.right);
+            updateView('left');
+            updateView('right');
         }
     });
 
     specs.forEach(function(spec){
         specList.append({header: spec.name});
-    })
+    });
     
-
-    centerPanel.append(specList)
-
-
-    Object.keys(views).forEach(function(view){
-        views[view].sel = document.createElement('select');
-        views[view].sel.innerHTML = '<option> --- </option>';
-        views[view].sel.style.marginRight = '5px';
-        datasets.forEach(function(dataset){
+    centerPanel.append(specList);
+    Object.keys(views).forEach(function(side){
+        views[side].sel = document.createElement('select');
+        views[side].sel.innerHTML = '<option> --- </option>';
+        views[side].sel.style.marginRight = '5px';
+        datasetList.forEach(function(dataset){
             var option = document.createElement('option');
             option.value = dataset.name;
             option.innerHTML = dataset.name;
-            views[view].sel.appendChild(option);
+            views[side].sel.appendChild(option);
         });
 
-        views[view].header.append('<span>Dataset: </span>');
-        views[view].header.append(views[view].sel);
+        views[side].header.append('<span>Dataset: </span>');
+        views[side].header.append(views[side].sel);
         
-        views[view].sel.onchange = function() {
-            dataset[view] = datasets.filter(d=>d.name == this.value)[0];
-            updateView(dataset[view], views[view]);
+        views[side].sel.onchange = function() {
+            datasets[side] = datasetList.filter(d=>d.name == this.value)[0];
+            updateView(side);
         }
     });
     
-   
-    function updateView(dataset, container) {
+    function updateView(side) {
+        var dataset = datasets[side];
+        var view = views[side];
         if(!dataset.data) return;
         var config = {
-            container: '#'+container.id + '-body',
-            width: container.innerWidth,
-            height: container.innerHeight,
+            container: '#'+ view.id + '-body',
+            width: view.innerWidth,
+            height: view.innerHeight,
             padding: 0,
+            // legend: true
         };
-        container.clear();
+        view.clear();
         var networkModel = (dataset.topology == 'Dragonfly') ? dragonfly : dragonflyCustom;
         
         networkModel(dataset.data, {groups: dataset.groups})
         .then(function(data){
             var dataInput = transform(data);
+            // if(colorDomains.length > 0) {
+            //     config.colorDomains = colorDomains;
+            // }
 
-            circularVis(config, contrastSpec, dataInput);
-        })
+            vis[side] = circularVis(config, contrastSpec, dataInput);
+            domains[side] = vis[side].map(v=>v.colorDomain);
+            var legendConfigs = {
+                container: '#panel-legend-body',
+                width: legendPanel.innerWidth,
+                height: legendPanel.innerHeight,
+                padding: {left: 35, right: 35, top: 50, bottom: 0},
+            };
+
+            if(vis.left !== undefined && vis.right !== undefined) {
+                var leftDomains = domains.left;
+                var rightDomains = domains.right;
+
+                for(var i = 0; i < leftDomains.length-1; i++) {
+                    colorDomains[i] = [
+                        Math.min(leftDomains[i][0], rightDomains[i][0]),
+                        Math.max(leftDomains[i][1], rightDomains[i][1])
+                    ];
+                }
+                legendConfigs.colorDomains = colorDomains;
+
+                vis.left.forEach(function(v, vi){
+                    if(typeof v.updateColor == 'function')
+                        v.updateColor(colorDomains[vi]);
+                })
+                vis.right.forEach(function(v, vi){
+                    if(typeof v.updateColor == 'function')
+                        v.updateColor(colorDomains[vi]);
+                })
 
 
+            }
+
+            legendPanel.clear();
+            vis[side].createColorLegend(legendConfigs);
+
+        });
     }
 
     return app;
