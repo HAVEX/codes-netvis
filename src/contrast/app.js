@@ -171,8 +171,6 @@ export default function netApp(arg) {
                     if(typeof v.updateColor == 'function')
                         v.updateColor(colorDomains[vi]);
                 })
-
-
             }
 
             legendPanel.clear();

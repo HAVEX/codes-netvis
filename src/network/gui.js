@@ -45,8 +45,7 @@ const AGGR_METRICS = [
     'local_traffic',
     'terminal_traffic',
     'global_saturation',
-    'local_saturation',
-    'terminal_saturation'
+    'local_saturation'
 ];
 
 var colorSchemes = [

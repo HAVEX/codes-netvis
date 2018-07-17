@@ -12,6 +12,8 @@ const METRICS = {
     },
     terminals: {
         terminal_id: "$addToSet",
+        router_port: "$first",
+        router_rank: "$first",
         avg_hops: "$avg",
         sat_time: "$sum",
         data_size: "$sum",
@@ -99,7 +101,7 @@ export default function circularVis(config, specification, data) {
         aggrSpec.$group = aggrAttr;
     }
     aggrSpec.$collect = {routers: {$data: '*'}};
-    const visType = ['bar', 'bar', 'heatmap', 'scatter'];
+    const visType = ['bar', 'bar', 'heatmap', 'circle'];
 
     proc.aggregate(aggrSpec);
     var result = proc.execute(data);
@@ -138,7 +140,9 @@ export default function circularVis(config, specification, data) {
         });
 
         // console.log(s.data);
-        s.type = visType[Object.keys(s.vmap).length-1];
+        if(!s.hasOwnProperty('type')) {
+            s.type = visType[Object.keys(s.vmap).length-1];            
+        }
         s.size = Object.keys(spec[0].vmap).length;
     })
 
