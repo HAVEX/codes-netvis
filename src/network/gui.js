@@ -252,7 +252,6 @@ export default function GUI(arg) {
             spec.project = projection.val();
             spec.vmap = vmap;
             spec.colors = colorScheme;
-            console.log(spec.filter)
             if(spec.hasOwnProperty('data')) delete spec.data;
             return spec;
         }
@@ -273,11 +272,9 @@ export default function GUI(arg) {
                     baseSpec.filter[aggrAttr] = filterValues;
                 }
             }
-            console.log(baseSpec);
             return layer.getSpec(baseSpec);
         });
-        console.log(savedSpec);
-        
+
         return savedSpec;
     }
 
@@ -298,14 +295,13 @@ export default function GUI(arg) {
         slide: onSliderUpdate
     };
 
-    function updateSlider(v) {
+    function updateSlider() {
         if(stats.hasOwnProperty(aggrAttr)) filterRange = [stats[aggrAttr].min, stats[aggrAttr].max]; 
         filterConfig.min = filterRange[0];              
         filterConfig.max = filterRange[1]; 
-        filterValues = filterRange;   
-        filterConfig.values = filterValues;  
+        filterValues = filterRange;     
         $( "#network-filter-attribute" ).text( aggrAttr + ' range: ');
-        $( "#network-filter-range" ).text( filterValues[0] + ' - ' + filterValues[1]);
+        $( "#network-filter-range" ).text( filterRange[0] + ' - ' + filterRange[1]);
         $( "#network-filter-slider" ).slider(filterConfig);        
     }
 
@@ -346,14 +342,7 @@ export default function GUI(arg) {
             aggrAttr = $(this).val();
             updateSlider();
         });
-
-        if(specs[0].hasOwnProperty('filter')) {
-            filterValues = specs[0].filter[specs[0].aggregate];
-            filterConfig.values = filterValues;
-            updateSlider(filterValues);
-        } else {
-            updateSlider();            
-        }
+        updateSlider();
         $('#transform-attributes').append(aggrAttrSelection);
         updateSelection(
             aggrAttrSelection,
