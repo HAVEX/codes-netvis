@@ -267,10 +267,10 @@ export default function GUI(arg) {
             var baseSpec = (Array.isArray(s)) ? s[li] || {} : {};
             if(li === 0) {
                 baseSpec.aggregate = aggrAttr;
-                if(filterValues[0] != filterRange[0] || filterValues[1] != filterRange[1]){
+                // if(filterValues[0] != filterRange[0] || filterValues[1] != filterRange[1]){
                     baseSpec.filter = {};
                     baseSpec.filter[aggrAttr] = filterValues;
-                }
+                // }
             }
             return layer.getSpec(baseSpec);
         });
@@ -279,7 +279,7 @@ export default function GUI(arg) {
     }
 
     var filterRange = [0, 1];
-    var filterValues;
+    var filterValues = filterRange;
 
     var onSliderUpdate = function(event, ui) {
         filterValues = ui.values;
@@ -299,9 +299,10 @@ export default function GUI(arg) {
         if(stats.hasOwnProperty(aggrAttr)) filterRange = [stats[aggrAttr].min, stats[aggrAttr].max]; 
         filterConfig.min = filterRange[0];              
         filterConfig.max = filterRange[1]; 
-        filterValues = filterRange;     
+        if(filterValues === null) filterValues = filterRange;     
+        filterConfig.values = filterValues;
         $( "#network-filter-attribute" ).text( aggrAttr + ' range: ');
-        $( "#network-filter-range" ).text( filterRange[0] + ' - ' + filterRange[1]);
+        $( "#network-filter-range" ).text( filterValues[0] + ' - ' + filterValues[1]);
         $( "#network-filter-slider" ).slider(filterConfig);        
     }
 
@@ -342,14 +343,19 @@ export default function GUI(arg) {
             aggrAttr = $(this).val();
             updateSlider();
         });
+        aggrAttr = specs[0].aggregate;        
+        if(specs[0].hasOwnProperty('filter')) {
+            filterValues = specs[0].filter[aggrAttr];
+        } else {
+            filterValues = null; 
+        }
         updateSlider();
         $('#transform-attributes').append(aggrAttrSelection);
         updateSelection(
             aggrAttrSelection,
             AGGR_METRICS,
-            specs[0].aggregate
+            aggrAttr
         );
-        aggrAttr = specs[0].aggregate;
         clearGUI();
         specs.forEach(function(spec, si){
             var l = createLayer(spec);
@@ -366,6 +372,7 @@ export default function GUI(arg) {
             stats = newStats; 
             filterRange = [stats[aggrAttr].min, stats[aggrAttr].max]
             filterConfig.values = filterRange;
+            filterValues = filterRange;
             filterConfig.min = filterRange[0];
             filterConfig.max = filterRange[1];
             updateSlider();
