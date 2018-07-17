@@ -1,8 +1,11 @@
 import {Layout, Panel, List, Button, Icon} from 'dashi';
 import transform from './transform';
 import circularVis from './circularvis';
-
 import gui from'./gui';
+
+import p6Solo from 'p6-solo';
+
+const getStats = p6Solo.stats;
 
 
 export default function netApp(arg) {
@@ -13,6 +16,8 @@ export default function netApp(arg) {
         onUpdate = arg.onupdate || arg.onUpdate || function() {},
         container = arg.container || document.body,
         onSave = arg.onsave || function() {};
+
+    var dataStats = {};
 
     var layoutMain = new Layout({
         container: container,
@@ -83,11 +88,11 @@ export default function netApp(arg) {
 
     var specGUI = gui({
         container: 'spec-gui',
+        stats: dataStats,
         onsave: function(spec) { 
             onSave(spec);
             specifications.push(spec);
             projectionSelection.innerHTML += '<option value="' + spec.name + '" selected="selected">' + spec.name + '</option>';
-           
         }
     });
 
@@ -99,7 +104,7 @@ export default function netApp(arg) {
     editor.getSession().setMode("ace/mode/json");
     editor.$blockScrolling = Infinity;
     editor.setOptions({
-        fontSize: "15pt"
+        fontSize: "12pt"
     });
 
     listSpecs();
@@ -109,7 +114,6 @@ export default function netApp(arg) {
         specGUI.create(visSpec);
         editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
     
-       
         projectionSelection.style.marginRight = '5px';
         specifications.forEach(function(spec){
             var option = document.createElement('option');
@@ -140,7 +144,7 @@ export default function netApp(arg) {
                     specGUI.create(visSpec);
                     this.className = this.className.replace(' blue', '');
                 } else {
-                    visSpec = specGUI.getSpec();
+                    visSpec = specGUI.getSpec(JSON.parse(editor.getValue()));
                     editor.setValue("")
                     editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
     
@@ -161,7 +165,7 @@ export default function netApp(arg) {
             if(showEditor)
                 visSpec = JSON.parse(editor.getValue());
             else
-                visSpec = specGUI.getSpec();
+                visSpec = specGUI.getSpec(visSpec);
 
             views.network.clear();
             circularVis(config, visSpec, data);
@@ -173,8 +177,6 @@ export default function netApp(arg) {
         network.ready(specifications);
     }
 
-
-
     var config = {
         container: '#panel-network-body',
         width: views.network.innerWidth,
@@ -185,6 +187,8 @@ export default function netApp(arg) {
     
     network.update = function(input) {
         data = transform(input);
+        dataStats = getStats(data, Object.keys(data[0]).filter(k=>!Array.isArray(data[0][k])));
+        specGUI.updateStats(dataStats);
         views.network.clear();
         visSpec = JSON.parse(editor.getValue());
         circularVis(config, visSpec, data);

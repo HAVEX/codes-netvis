@@ -56,6 +56,6 @@ export default function transform(inputData) {
 
     });
 
-    console.log(routers)
+    // console.log(routers)
     return routers;
 }

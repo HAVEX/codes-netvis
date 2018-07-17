@@ -138,17 +138,13 @@ export default function netApp(arg) {
         networkModel(dataset.data, {groups: dataset.groups})
         .then(function(data){
             var dataInput = transform(data);
-            // if(colorDomains.length > 0) {
-            //     config.colorDomains = colorDomains;
-            // }
-
             vis[side] = circularVis(config, contrastSpec, dataInput);
             domains[side] = vis[side].map(v=>v.colorDomain);
             var legendConfigs = {
                 container: '#panel-legend-body',
                 width: legendPanel.innerWidth,
                 height: legendPanel.innerHeight,
-                padding: {left: 35, right: 35, top: 50, bottom: 0},
+                padding: {left: 20, right: 20, top: 30, bottom: 0},
             };
 
             if(vis.left !== undefined && vis.right !== undefined) {
@@ -172,10 +168,8 @@ export default function netApp(arg) {
                         v.updateColor(colorDomains[vi]);
                 })
             }
-
             legendPanel.clear();
             vis[side].createColorLegend(legendConfigs);
-
         });
     }
 

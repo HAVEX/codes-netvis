@@ -5747,7 +5747,7 @@ function transform(inputData) {
 
     });
 
-    console.log(routers)
+    // console.log(routers)
     return routers;
 }
 
@@ -5957,7 +5957,6 @@ root.hc5 = __WEBPACK_IMPORTED_MODULE_0__src_main__["a" /* default */];
 
 
 
-
 function mapColor(colors, colorDomain) {
     var getColor;
     if(typeof colors == 'function') {
@@ -5971,6 +5970,10 @@ function mapColor(colors, colorDomain) {
                 return '#000000';
             }
         }
+        getColor.domain = function(d) {
+            getRange = d3.scale.linear().domain(d).range([0, 1]);
+            return getRange;
+        }
     } else {
         getColor =  d3.scale.linear()
             .domain(colorDomain)
@@ -5978,8 +5981,6 @@ function mapColor(colors, colorDomain) {
     }
     return getColor;
 }
-
-
 
 /***/ }),
 /* 75 */
@@ -7870,9 +7871,7 @@ function colorLegend(arg){
     } else {
         legend = container;
     } 
-    
-    var rect = legend.append("g");
-   
+       
     if(container !== null){
         if(typeof container.appendChild === 'function')
             container.appendChild(legend);
@@ -7909,9 +7908,7 @@ function colorLegend(arg){
     }
 
     var grad = linearGradient(colors);
-
     var rect = legend.append("g");
-
     rect.attr('transform', 'translate(' + padding.left + ', ' + padding.right + ')');
 
     var colorScale = rect.append("rect")
@@ -14241,11 +14238,16 @@ function transform(input) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__transform__ = __webpack_require__(71);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__circularvis__ = __webpack_require__(72);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__gui__ = __webpack_require__(276);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_p6_solo__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_p6_solo___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_p6_solo__);
 
 
 
 
 
+
+
+const getStats = __WEBPACK_IMPORTED_MODULE_4_p6_solo___default.a.stats;
 
 
 function netApp(arg) {
@@ -14256,6 +14258,8 @@ function netApp(arg) {
         onUpdate = arg.onupdate || arg.onUpdate || function() {},
         container = arg.container || document.body,
         onSave = arg.onsave || function() {};
+
+    var dataStats = {};
 
     var layoutMain = new __WEBPACK_IMPORTED_MODULE_0_dashi__["c" /* Layout */]({
         container: container,
@@ -14326,11 +14330,11 @@ function netApp(arg) {
 
     var specGUI = Object(__WEBPACK_IMPORTED_MODULE_3__gui__["a" /* default */])({
         container: 'spec-gui',
+        stats: dataStats,
         onsave: function(spec) { 
             onSave(spec);
             specifications.push(spec);
             projectionSelection.innerHTML += '<option value="' + spec.name + '" selected="selected">' + spec.name + '</option>';
-           
         }
     });
 
@@ -14342,7 +14346,7 @@ function netApp(arg) {
     editor.getSession().setMode("ace/mode/json");
     editor.$blockScrolling = Infinity;
     editor.setOptions({
-        fontSize: "15pt"
+        fontSize: "12pt"
     });
 
     listSpecs();
@@ -14352,7 +14356,6 @@ function netApp(arg) {
         specGUI.create(visSpec);
         editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
     
-       
         projectionSelection.style.marginRight = '5px';
         specifications.forEach(function(spec){
             var option = document.createElement('option');
@@ -14383,7 +14386,7 @@ function netApp(arg) {
                     specGUI.create(visSpec);
                     this.className = this.className.replace(' blue', '');
                 } else {
-                    visSpec = specGUI.getSpec();
+                    visSpec = specGUI.getSpec(JSON.parse(editor.getValue()));
                     editor.setValue("")
                     editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
     
@@ -14404,7 +14407,7 @@ function netApp(arg) {
             if(showEditor)
                 visSpec = JSON.parse(editor.getValue());
             else
-                visSpec = specGUI.getSpec();
+                visSpec = specGUI.getSpec(visSpec);
 
             views.network.clear();
             Object(__WEBPACK_IMPORTED_MODULE_2__circularvis__["a" /* default */])(config, visSpec, data);
@@ -14416,8 +14419,6 @@ function netApp(arg) {
         network.ready(specifications);
     }
 
-
-
     var config = {
         container: '#panel-network-body',
         width: views.network.innerWidth,
@@ -14428,6 +14429,8 @@ function netApp(arg) {
     
     network.update = function(input) {
         data = Object(__WEBPACK_IMPORTED_MODULE_1__transform__["a" /* default */])(input);
+        dataStats = getStats(data, Object.keys(data[0]).filter(k=>!Array.isArray(data[0][k])));
+        specGUI.updateStats(dataStats);
         views.network.clear();
         visSpec = JSON.parse(editor.getValue());
         Object(__WEBPACK_IMPORTED_MODULE_2__circularvis__["a" /* default */])(config, visSpec, data);
@@ -14612,7 +14615,7 @@ function hc5(spec) {
                 width: options.width,
                 title: layer.project + ' (' + ((layer.vmap) ? layer.vmap.color : null) + ')',
                 domain: colorDomain,
-                padding: options.padding || {left: 25, right: 25, top: 40, bottom: 0},
+                padding: options.padding,
                 pos: [0, options.height / (layers.length-1) * li]
             });
         });
@@ -14620,9 +14623,7 @@ function hc5(spec) {
 
     rings.updateColor = function(colorDomains) {
         rings.forEach(function(ring, ri){
-
             if(layers[ri].type !== 'text') {
-
                 ring.updateColor(colorDomains[ri]);
             }
         })
@@ -18269,15 +18270,20 @@ function scatter(arg) {
 
 var template = '' +
 '<div id="specUI" class="ui form" style=" padding: 20px;">' +
-  '<div class="fields"  style="width: 100%; background: #EEE; padding: 20px;">' +
-    '<div class="sixteen wide field" id="transform-attributes">' +
+  '<div style="width: 100%; background: #EEE; padding: 20px;">' +
+    '<div id="transform-attributes">' +
       '<label>Aggregate by</label>' +
     '</div>' +
+    '<div id="network-filter-slider" style="margin: 10px 0;"></div>' +
+    '<div>' + 
+     '<label id="network-filter-attribute"></label>' + 
+     '<span id="network-filter-range" style="border:0; color:#f6931f; font-weight:bold;"> </span>'+
+    '</div>' +
+   '</div>' +
     // '<div class="four wide field">' +
     //   '<label>BinMax</label>' +
     //   '<input type="number" value="7" disable="" id="aggregation-binMax">' +
     // '</div>' +
-  '</div>' +
   '<table class="ui very basic celled table">' +
     '<thead>' +
       '<tr>' +
@@ -18364,7 +18370,10 @@ function GUI(arg) {
 
     var options = arg || {},
         container = options.container,
+        stats = options.stats,
         onSave = options.onsave || options.onSave || function(){};
+
+    var savedSpec;
 
     $('#'+container).html(template);
 
@@ -18480,15 +18489,13 @@ function GUI(arg) {
             var v = projection.val();
             updateDropDown(v);
         })
-        function getLayerSpec(id) {
-            var spec = {},
+        function getLayerSpec(s) {
+            var spec = s || {},
                 visualEncoding = encoding.val(),
                 colorScheme = colorMenuDiv.dropdown('get value').split(','),
                 vmap = {};
 
             if(colorScheme.length == 1) colorScheme = colorScheme[0];
-
-            console.log(visualEncoding)
             if( visualEncoding.includes(' + ') ) {
                 var encodings = visualEncoding.split(' + ');
                 vmap.size = encodings[0];
@@ -18497,21 +18504,22 @@ function GUI(arg) {
                 vmap.color = visualEncoding;
             }
 
-            if(xAttr != METRICS_NULL && xAttr !== null) vmap.x = xAttr;
-            if(yAttr != METRICS_NULL && yAttr !== null) vmap.y = yAttr;
+            // if(xAttr != METRICS_NULL && xAttr !== null) vmap.x = xAttr;
+            // if(yAttr != METRICS_NULL && yAttr !== null) vmap.y = yAttr;
 
-            if(aggregate) {
+            if(aggregate && !spec.hasOwnProperty('aggregate')) {
                 spec.aggregate = (aggrAttr == 'router_rank')
                     ? 'router_port'
                     : 'router_rank';
 
-                if(id === 0) spec.aggregate = aggrAttr;
+                // if(id === 0) spec.aggregate = aggrAttr;
             }
 
             spec.project = projection.val();
             spec.vmap = vmap;
             spec.colors = colorScheme;
-
+            console.log(spec.filter)
+            if(spec.hasOwnProperty('data')) delete spec.data;
             return spec;
         }
 
@@ -18521,11 +18529,53 @@ function GUI(arg) {
         }
     }
 
-    function getSpec() {
-        return layers.map(function(layer, li){
-            return layer.getSpec(li);
+    function getSpec(s) {
+        savedSpec =  layers.map(function(layer, li){
+            var baseSpec = (Array.isArray(s)) ? s[li] || {} : {};
+            if(li === 0) {
+                baseSpec.aggregate = aggrAttr;
+                if(filterValues[0] != filterRange[0] || filterValues[1] != filterRange[1]){
+                    baseSpec.filter = {};
+                    baseSpec.filter[aggrAttr] = filterValues;
+                }
+            }
+            console.log(baseSpec);
+            return layer.getSpec(baseSpec);
         });
+        console.log(savedSpec);
+        
+        return savedSpec;
     }
+
+    var filterRange = [0, 1];
+    var filterValues;
+
+    var onSliderUpdate = function(event, ui) {
+        filterValues = ui.values;
+        $( "#network-filter-range" ).text( ui.values[0] + ' - ' + ui.values[1]);
+        
+    }
+
+    var filterConfig = {
+        range: true,
+        min: filterRange[0],
+        max: filterRange[1],
+        values: filterRange,
+        slide: onSliderUpdate
+    };
+
+    function updateSlider(v) {
+        if(stats.hasOwnProperty(aggrAttr)) filterRange = [stats[aggrAttr].min, stats[aggrAttr].max]; 
+        filterConfig.min = filterRange[0];              
+        filterConfig.max = filterRange[1]; 
+        filterValues = filterRange;   
+        filterConfig.values = filterValues;  
+        $( "#network-filter-attribute" ).text( aggrAttr + ' range: ');
+        $( "#network-filter-range" ).text( filterValues[0] + ' - ' + filterValues[1]);
+        $( "#network-filter-slider" ).slider(filterConfig);        
+    }
+
+    // updateSlider();
 
     $("#add-layer").click(function(){
         layers.push(createLayer());
@@ -18538,10 +18588,9 @@ function GUI(arg) {
         if(specName) {
             onSave({
                 name: specName, 
-                spec: getSpec()
+                spec: savedSpec
             });
         }
-
     })
 
     $("#remove-layer").click(function(){
@@ -18561,7 +18610,16 @@ function GUI(arg) {
         var aggrAttrSelection = $('<select/>').addClass('ui fluid dropdown');
         aggrAttrSelection.change(function(){
             aggrAttr = $(this).val();
-        })
+            updateSlider();
+        });
+
+        if(specs[0].hasOwnProperty('filter')) {
+            filterValues = specs[0].filter[specs[0].aggregate];
+            filterConfig.values = filterValues;
+            updateSlider(filterValues);
+        } else {
+            updateSlider();            
+        }
         $('#transform-attributes').append(aggrAttrSelection);
         updateSelection(
             aggrAttrSelection,
@@ -18580,7 +18638,15 @@ function GUI(arg) {
     return {
         getSpec: getSpec,
         create: createGUI,
-        clear: clearGUI
+        clear: clearGUI,
+        updateStats: function(newStats){ 
+            stats = newStats; 
+            filterRange = [stats[aggrAttr].min, stats[aggrAttr].max]
+            filterConfig.values = filterRange;
+            filterConfig.min = filterRange[0];
+            filterConfig.max = filterRange[1];
+            updateSlider();
+        }
     };
 }
 
@@ -20668,17 +20734,13 @@ function netApp(arg) {
         networkModel(dataset.data, {groups: dataset.groups})
         .then(function(data){
             var dataInput = Object(__WEBPACK_IMPORTED_MODULE_1__network_transform__["a" /* default */])(data);
-            // if(colorDomains.length > 0) {
-            //     config.colorDomains = colorDomains;
-            // }
-
             vis[side] = Object(__WEBPACK_IMPORTED_MODULE_2__network_circularvis__["a" /* default */])(config, contrastSpec, dataInput);
             domains[side] = vis[side].map(v=>v.colorDomain);
             var legendConfigs = {
                 container: '#panel-legend-body',
                 width: legendPanel.innerWidth,
                 height: legendPanel.innerHeight,
-                padding: {left: 35, right: 35, top: 50, bottom: 0},
+                padding: {left: 20, right: 20, top: 30, bottom: 0},
             };
 
             if(vis.left !== undefined && vis.right !== undefined) {
@@ -20702,10 +20764,8 @@ function netApp(arg) {
                         v.updateColor(colorDomains[vi]);
                 })
             }
-
             legendPanel.clear();
             vis[side].createColorLegend(legendConfigs);
-
         });
     }
 
