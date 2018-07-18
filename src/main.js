@@ -56,7 +56,7 @@ export default function App() {
     var specifications;
 
 
-    var db = new Dexie("codes-netvis");
+    var db = new Dexie("codes-netvis-0.1");
     db.version(1).stores({
         datasets: 'name,topology,groups,data',
         specs: 'name,spec'

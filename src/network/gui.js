@@ -87,6 +87,8 @@ var terminalMetrics = [
     'avg_hops',
     'data_size',
     'sat_time',
+    'data_size + sat_time',
+    'avg_hops + avg_packet_latency',
     'router_port',
     'router_rank',
     'job_id'
