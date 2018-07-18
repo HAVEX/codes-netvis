@@ -28,9 +28,10 @@ const newDatasetForm = `
 export default function dataManagement(arg) {
     var dataManager = {},
         options = arg || {},
-        container = options.container;
+        container = options.container,
+        onDataAdd = options.onDataAdd || function() {},
+        onDataDelete = options.onDataDelete || function() {};
 
-  
     var datasets = arg.datasets || [];
 
     var dataPanel = new Panel({
@@ -68,7 +69,9 @@ export default function dataManagement(arg) {
                 label: '',
                 icon: "minus",
                 types: ['red', 'tiny'],
-                onclick: function() { db.datasets.where("name").equals(dataset.name).delete().then(function(){ window.location.reload(); }) }
+                onclick: function() { 
+                    onDataDelete(dataset.name);
+                }
             }),
             id, 
             dataset.topology, 
@@ -159,7 +162,7 @@ export default function dataManagement(arg) {
                 }
                 datasets.push(newDataset);
                 console.log(newDataset);
-                db.datasets.add(newDataset).then(function(){ console.log('Added new dataset ', label); });
+                onDataAdd(newDataset);
                 addDataRow(datasets.length-1, newDataset);
             } else {
                 console.log("missing information to add new dataset");

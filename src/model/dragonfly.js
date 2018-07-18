@@ -41,8 +41,8 @@ export default function(data, metadata) {
     const GROUP_TOTAL = metadata.groups;
     const TERMINAL_TOTAL = data[0].split('\n').length - 2; 
     const ROUTER_TOTAL = data[1].split('\n').length - 2;
-    const TERMINAL_PER_ROUTER = TERMINAL_TOTAL / ROUTER_TOTAL ;
-    const ROUTER_PER_GROUP = ROUTER_TOTAL / GROUP_TOTAL;
+    const TERMINAL_PER_ROUTER = Math.round(TERMINAL_TOTAL / ROUTER_TOTAL);
+    const ROUTER_PER_GROUP =Math.round( ROUTER_TOTAL / GROUP_TOTAL);
     const LOCAL_LINK_COUNT =  ROUTER_PER_GROUP;
     const GLOBAL_LINK_COUNT = TERMINAL_PER_ROUTER;
     
@@ -76,7 +76,6 @@ export default function(data, metadata) {
         var target_pos =  target_grp * ROUTER_PER_GROUP + my_pos;
         return target_pos;
     }
-
 
     busytime.forEach(function(l, li){
         l.local_sat_time.forEach(function(b, bi){

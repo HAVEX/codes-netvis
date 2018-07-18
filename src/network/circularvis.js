@@ -129,16 +129,19 @@ export default function circularVis(config, specification, data) {
         var entity = s.project,
             aggrAttr = s.aggregate,
             metrics = s.metrics || {$collect: METRICS[entity]};
+
         metrics.$group = s.aggregate;
         s.data = result.map(function(c, ci){
             var cData = []
             c.routers.forEach(function(router, ri){
                 cData = cData.concat(router[entity]);
             });
-            
-            return (cData.length) ? aggregate(cData, metrics) : [];
+            if(s.aggregate) {
+                return (cData.length) ? aggregate(cData, metrics) : [];
+            } else {
+                return cData;
+            }
         });
-
         // console.log(s.data);
         if(!s.hasOwnProperty('type')) {
             s.type = visType[Object.keys(s.vmap).length-1];            

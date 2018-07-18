@@ -95,7 +95,13 @@ export default function App() {
     
         var dataMgmt = dataManagement({
             container: 'data-list',
-            datasets: datasets
+            datasets: datasets,
+            onDataAdd: function(newDataset) {
+                db.datasets.add(newDataset).then(function(){ console.log('Added new dataset ', newDataset.label); });
+            },
+            onDataDelete: function(datasetName) {
+                db.datasets.where("name").equals(datasetName).delete().then(function(){ window.location.reload(); });               
+            }
         });
 
         dataMgmt.onselect = function(data) {

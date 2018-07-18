@@ -13,8 +13,11 @@ export default function loadData(args, callback) {
         ];
 
 
-    if(args.hasOwnProperty('jobAllocation'))
-        datafiles.push({url: URL + '/' +args.jobAllocation, dataType: "text"});
+    if(args.hasOwnProperty('jobAllocation')) {
+        var jobFile = args.jobAllocation || 'workloads.conf';
+        datafiles.push({url: URL + '/' + jobFile, dataType: "text"});
+        
+    }
 
     return ajax.getAll(datafiles).then(function(text){
         return new Promise(function(resolve, reject) {

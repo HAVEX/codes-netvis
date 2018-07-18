@@ -145,7 +145,7 @@ export default function netApp(arg) {
                     this.className = this.className.replace(' blue', '');
                 } else {
                     visSpec = specGUI.getSpec(JSON.parse(editor.getValue()));
-                    editor.setValue("")
+                    editor.setValue("");
                     editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
     
                     this.className += ' blue';

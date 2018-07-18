@@ -299,7 +299,7 @@ export default function GUI(arg) {
         if(stats.hasOwnProperty(aggrAttr)) filterRange = [stats[aggrAttr].min, stats[aggrAttr].max]; 
         filterConfig.min = filterRange[0];              
         filterConfig.max = filterRange[1]; 
-        if(filterValues === null) filterValues = filterRange;     
+        filterValues = filterRange;     
         filterConfig.values = filterValues;
         $( "#network-filter-attribute" ).text( aggrAttr + ' range: ');
         $( "#network-filter-range" ).text( filterValues[0] + ' - ' + filterValues[1]);
@@ -343,19 +343,21 @@ export default function GUI(arg) {
             aggrAttr = $(this).val();
             updateSlider();
         });
-        aggrAttr = specs[0].aggregate;        
+        
         if(specs[0].hasOwnProperty('filter')) {
-            filterValues = specs[0].filter[aggrAttr];
+            filterValues = specs[0].filter[specs[0].aggregate];
+            updateSlider(filterValues);       
         } else {
             filterValues = null; 
+            updateSlider();
         }
-        updateSlider();
         $('#transform-attributes').append(aggrAttrSelection);
         updateSelection(
             aggrAttrSelection,
             AGGR_METRICS,
-            aggrAttr
+            specs[0].aggregate
         );
+        aggrAttr = specs[0].aggregate;
         clearGUI();
         specs.forEach(function(spec, si){
             var l = createLayer(spec);

@@ -17,16 +17,16 @@ export default [
         localLinkPerRouter: 17,
         globalLinkPerRouter: 8
     },
-    {
-        name: 'Dragonfly Plus Uniform Random Traffic',
-        path: '/codes-data/tutorial/dfly-plus-rand',
-        topology: 'Dragonfly Plus',
-        groups: 33,
-        routers: 1056,
-        terminals: 8448,
-        localLinkPerRouter: 16,
-        globalLinkPerRouter: 16
-    },
+    // {
+    //     name: 'Dragonfly Plus Uniform Random Traffic',
+    //     path: '/codes-data/tutorial/dfly-plus-rand',
+    //     topology: 'Dragonfly Plus',
+    //     groups: 33,
+    //     routers: 1056,
+    //     terminals: 8448,
+    //     localLinkPerRouter: 16,
+    //     globalLinkPerRouter: 16
+    // },
     // {
     //     tag: 'AMR Boxlib on Dragonfly Adaptive',
     //     path: 'dfly-2550-adaptive-amr',
@@ -35,32 +35,32 @@ export default [
     //     routers: 510,
     //     terminals: 2550
     // },
-    // {
-    //     tag: 'Dragonfly Adaptive MiniFE',
-    //     path: 'dfly-2550-adaptive-minife',
-    //     topology: 'Dragonfly',
-    //     groups: 51,
-    //     routers: 510,
-    //     terminals: 2550
-    // },
+    {
+        name: 'Dragonfly Adaptive MiniFE',
+        path: '/codes-data/tutorial/dfly-2550-adaptive-minife',
+        topology: 'Dragonfly',
+        groups: 51,
+        routers: 510,
+        terminals: 2550
+    },
     // {
     //     tag: 'Random Group Placement Multi-Apps on Dfly',
-    //     path: 'dfly-5k-mapp-group',
+    //     path: '/codes-data/tutorial/dfly-5k-mapp-group',
     //     topology: 'Dragonfly',
     //     groups: 73,
     //     routers: 876,
     //     terminals: 5256,
-    //     jobAllocation: './workloads.conf',
+    //     jobAllocation: 'workloads.conf',
     //     jobs: ['AMG', 'AMR Boxlib', 'MiniFE']
     // },
     // {
     //     tag: 'Random Router Placement Multi-Apps on Dfly',
-    //     path: 'dfly-5k-mapp-router',
+    //     path: '/codes-data/tutorial/dfly-5k-mapp-router',
     //     topology: 'Dragonfly',
     //     groups: 73,
     //     routers: 876,
     //     terminals: 5256,
-    //     jobAllocation: './workloads.conf',
+    //     jobAllocation: 'workloads.conf',
     //     jobs: ['AMG', 'AMR Boxlib', 'MiniFE']
     // },
     // {

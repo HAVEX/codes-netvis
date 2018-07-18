@@ -1522,8 +1522,8 @@ const LINK_METRICS = ["group_id", "router_id", "router_port", "sat_time", "traff
     const GROUP_TOTAL = metadata.groups;
     const TERMINAL_TOTAL = data[0].split('\n').length - 2; 
     const ROUTER_TOTAL = data[1].split('\n').length - 2;
-    const TERMINAL_PER_ROUTER = TERMINAL_TOTAL / ROUTER_TOTAL ;
-    const ROUTER_PER_GROUP = ROUTER_TOTAL / GROUP_TOTAL;
+    const TERMINAL_PER_ROUTER = Math.round(TERMINAL_TOTAL / ROUTER_TOTAL);
+    const ROUTER_PER_GROUP =Math.round( ROUTER_TOTAL / GROUP_TOTAL);
     const LOCAL_LINK_COUNT =  ROUTER_PER_GROUP;
     const GLOBAL_LINK_COUNT = TERMINAL_PER_ROUTER;
     
@@ -1557,7 +1557,6 @@ const LINK_METRICS = ["group_id", "router_id", "router_port", "sat_time", "traff
         var target_pos =  target_grp * ROUTER_PER_GROUP + my_pos;
         return target_pos;
     }
-
 
     busytime.forEach(function(l, li){
         l.local_sat_time.forEach(function(b, bi){
@@ -5669,8 +5668,11 @@ function loadData(args, callback) {
         ];
 
 
-    if(args.hasOwnProperty('jobAllocation'))
-        datafiles.push({url: URL + '/' +args.jobAllocation, dataType: "text"});
+    if(args.hasOwnProperty('jobAllocation')) {
+        var jobFile = args.jobAllocation || 'workloads.conf';
+        datafiles.push({url: URL + '/' + jobFile, dataType: "text"});
+        
+    }
 
     return ajax.getAll(datafiles).then(function(text){
         return new Promise(function(resolve, reject) {
@@ -5891,16 +5893,19 @@ function circularVis(config, specification, data) {
         var entity = s.project,
             aggrAttr = s.aggregate,
             metrics = s.metrics || {$collect: METRICS[entity]};
+
         metrics.$group = s.aggregate;
         s.data = result.map(function(c, ci){
             var cData = []
             c.routers.forEach(function(router, ri){
                 cData = cData.concat(router[entity]);
             });
-            
-            return (cData.length) ? Object(__WEBPACK_IMPORTED_MODULE_0_p6_solo__["aggregate"])(cData, metrics) : [];
+            if(s.aggregate) {
+                return (cData.length) ? Object(__WEBPACK_IMPORTED_MODULE_0_p6_solo__["aggregate"])(cData, metrics) : [];
+            } else {
+                return cData;
+            }
         });
-
         // console.log(s.data);
         if(!s.hasOwnProperty('type')) {
             s.type = visType[Object.keys(s.vmap).length-1];            
@@ -8326,7 +8331,13 @@ function App() {
     
         var dataMgmt = Object(__WEBPACK_IMPORTED_MODULE_0__datamgmt__["a" /* default */])({
             container: 'data-list',
-            datasets: datasets
+            datasets: datasets,
+            onDataAdd: function(newDataset) {
+                db.datasets.add(newDataset).then(function(){ console.log('Added new dataset ', newDataset.label); });
+            },
+            onDataDelete: function(datasetName) {
+                db.datasets.where("name").equals(datasetName).delete().then(function(){ window.location.reload(); });               
+            }
         });
 
         dataMgmt.onselect = function(data) {
@@ -8423,9 +8434,10 @@ const newDatasetForm = `
 function dataManagement(arg) {
     var dataManager = {},
         options = arg || {},
-        container = options.container;
+        container = options.container,
+        onDataAdd = options.onDataAdd || function() {},
+        onDataDelete = options.onDataDelete || function() {};
 
-  
     var datasets = arg.datasets || [];
 
     var dataPanel = new __WEBPACK_IMPORTED_MODULE_0_dashi__["e" /* Panel */]({
@@ -8463,7 +8475,9 @@ function dataManagement(arg) {
                 label: '',
                 icon: "minus",
                 types: ['red', 'tiny'],
-                onclick: function() { db.datasets.where("name").equals(dataset.name).delete().then(function(){ window.location.reload(); }) }
+                onclick: function() { 
+                    onDataDelete(dataset.name);
+                }
             }),
             id, 
             dataset.topology, 
@@ -8554,7 +8568,7 @@ function dataManagement(arg) {
                 }
                 datasets.push(newDataset);
                 console.log(newDataset);
-                db.datasets.add(newDataset).then(function(){ console.log('Added new dataset ', label); });
+                onDataAdd(newDataset);
                 addDataRow(datasets.length-1, newDataset);
             } else {
                 console.log("missing information to add new dataset");
@@ -14387,7 +14401,7 @@ function netApp(arg) {
                     this.className = this.className.replace(' blue', '');
                 } else {
                     visSpec = specGUI.getSpec(JSON.parse(editor.getValue()));
-                    editor.setValue("")
+                    editor.setValue("");
                     editor.session.insert({row:0, column: 0}, JSON.stringify(visSpec, null, 2));
     
                     this.className += ' blue';
@@ -18212,14 +18226,17 @@ function scatter(arg) {
     }
 
     if(vmap.x) {
-        getPosX = d3.scale.linear()
-            .domain([stats[vmap.x].min, stats[vmap.x].max])
-            .range([0, outerRadius]);
+        var xScale = d3.scale.linear()
+        .domain([stats[vmap.x].min, stats[vmap.x].max]);
+
+        getPosX = function(d) {
+            var v = xScale.range([ d.startAngle, d.endAngle])(d[vmap.x]);
+            return v;
+        }
     }
 
     if(vmap.y) {
-        console.log(data)
-        getPosY =  d3.scale.linear()
+        getPosY = d3.scale.linear()
             .domain([stats[vmap.y].min, stats[vmap.y].max])
             .range([innerRadius, outerRadius]);
     }
@@ -18236,8 +18253,8 @@ function scatter(arg) {
         .enter().append("circle")
         .attr("class", "dot")
         .attr("r", function(d){return getSize(d[vmap.size])})
-        .attr("cx", function(d){return getPosX(d[vmap.x])})
-        .attr("cy",function(d){return getPosY(d[vmap.y])})
+        .attr("cx", function(d){return getPosY(d[vmap.y]) * Math.cos(getPosX(d))})
+        .attr("cy",function(d){return getPosY(d[vmap.y]) * Math.sin(getPosX(d))})
         .style("fill", function(d){return getColor(d[vmap.color])});
 
     scatter.colorDomain = colorDomain;
@@ -18565,7 +18582,7 @@ function GUI(arg) {
         if(stats.hasOwnProperty(aggrAttr)) filterRange = [stats[aggrAttr].min, stats[aggrAttr].max]; 
         filterConfig.min = filterRange[0];              
         filterConfig.max = filterRange[1]; 
-        if(filterValues === null) filterValues = filterRange;     
+        filterValues = filterRange;     
         filterConfig.values = filterValues;
         $( "#network-filter-attribute" ).text( aggrAttr + ' range: ');
         $( "#network-filter-range" ).text( filterValues[0] + ' - ' + filterValues[1]);
@@ -18609,19 +18626,21 @@ function GUI(arg) {
             aggrAttr = $(this).val();
             updateSlider();
         });
-        aggrAttr = specs[0].aggregate;        
+        
         if(specs[0].hasOwnProperty('filter')) {
-            filterValues = specs[0].filter[aggrAttr];
+            filterValues = specs[0].filter[specs[0].aggregate];
+            updateSlider(filterValues);       
         } else {
             filterValues = null; 
+            updateSlider();
         }
-        updateSlider();
         $('#transform-attributes').append(aggrAttrSelection);
         updateSelection(
             aggrAttrSelection,
             AGGR_METRICS,
-            aggrAttr
+            specs[0].aggregate
         );
+        aggrAttr = specs[0].aggregate;
         clearGUI();
         specs.forEach(function(spec, si){
             var l = createLayer(spec);
@@ -25786,16 +25805,16 @@ process.umask = function() { return 0; };
         localLinkPerRouter: 17,
         globalLinkPerRouter: 8
     },
-    {
-        name: 'Dragonfly Plus Uniform Random Traffic',
-        path: '/codes-data/tutorial/dfly-plus-rand',
-        topology: 'Dragonfly Plus',
-        groups: 33,
-        routers: 1056,
-        terminals: 8448,
-        localLinkPerRouter: 16,
-        globalLinkPerRouter: 16
-    },
+    // {
+    //     name: 'Dragonfly Plus Uniform Random Traffic',
+    //     path: '/codes-data/tutorial/dfly-plus-rand',
+    //     topology: 'Dragonfly Plus',
+    //     groups: 33,
+    //     routers: 1056,
+    //     terminals: 8448,
+    //     localLinkPerRouter: 16,
+    //     globalLinkPerRouter: 16
+    // },
     // {
     //     tag: 'AMR Boxlib on Dragonfly Adaptive',
     //     path: 'dfly-2550-adaptive-amr',
@@ -25804,32 +25823,32 @@ process.umask = function() { return 0; };
     //     routers: 510,
     //     terminals: 2550
     // },
-    // {
-    //     tag: 'Dragonfly Adaptive MiniFE',
-    //     path: 'dfly-2550-adaptive-minife',
-    //     topology: 'Dragonfly',
-    //     groups: 51,
-    //     routers: 510,
-    //     terminals: 2550
-    // },
+    {
+        name: 'Dragonfly Adaptive MiniFE',
+        path: '/codes-data/tutorial/dfly-2550-adaptive-minife',
+        topology: 'Dragonfly',
+        groups: 51,
+        routers: 510,
+        terminals: 2550
+    },
     // {
     //     tag: 'Random Group Placement Multi-Apps on Dfly',
-    //     path: 'dfly-5k-mapp-group',
+    //     path: '/codes-data/tutorial/dfly-5k-mapp-group',
     //     topology: 'Dragonfly',
     //     groups: 73,
     //     routers: 876,
     //     terminals: 5256,
-    //     jobAllocation: './workloads.conf',
+    //     jobAllocation: 'workloads.conf',
     //     jobs: ['AMG', 'AMR Boxlib', 'MiniFE']
     // },
     // {
     //     tag: 'Random Router Placement Multi-Apps on Dfly',
-    //     path: 'dfly-5k-mapp-router',
+    //     path: '/codes-data/tutorial/dfly-5k-mapp-router',
     //     topology: 'Dragonfly',
     //     groups: 73,
     //     routers: 876,
     //     terminals: 5256,
-    //     jobAllocation: './workloads.conf',
+    //     jobAllocation: 'workloads.conf',
     //     jobs: ['AMG', 'AMR Boxlib', 'MiniFE']
     // },
     // {
