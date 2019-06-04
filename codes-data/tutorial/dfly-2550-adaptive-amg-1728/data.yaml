@@ -1,0 +1,24 @@
+model:
+    name: 'dragonfly'
+    num_node: 2550
+    num_router: 510
+    num_group: 51
+    router_radix: 20
+    global_link: 5
+    local_link: 10
+    routing: 'adaptive'
+
+workload:
+    type: 'dumpi'
+    app: 'Algebraic Multigrid Solver'
+    tasks: 1728
+
+results:
+    summary:
+        terminal: 'dragonfly-msg-stats'
+        router_stats: 'dragonfly-router-stats'
+        router_traffic: 'dragonfly-router-traffic'
+
+    sampling:
+        terminal: 'dragonfly-terminals-adaptive.csv'
+        router: 'dragonfly-routers-adaptive-full.csv'
